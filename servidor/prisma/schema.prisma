@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 datasource db {
   provider = "sqlite"
 }
@@ -7,17 +6,59 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Categoria {
-  id        Int       @id @default(autoincrement())
-  nombre    String    @unique
-  productos Producto[]
+// Para timestamps se usa DateTime. Referencia:
+// https://www.prisma.io/docs/orm/v7/core-concepts/supported-databases/sqlite#type-mappings
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String
+  passwordHash String
+  createdAt    DateTime? @default(now())
 }
 
-model Producto {
-  id          Int       @id @default(autoincrement())
-  nombre      String
-  precio      Float
-  cantidad    Int       @default(0)
-  categoriaId Int
-  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+model Class {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  name      String
+  section   String
+  location  String
+  schedule  String
+  active    Boolean?  @default(true)
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @default(now())
+  stations  Station[]
+}
+
+model Station {
+  id              Int       @id @default(autoincrement())
+  code            String    @unique
+  name            String
+  location        String
+  operatingSystem String
+  ignored         Boolean?  @default(false)
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @default(now())
+  classId         Int
+  class           Class @relation(fields: [classId], references: [id])
+  reports         Report[]
+}
+
+model Report {
+  id             Int       @id @default(autoincrement())
+  declaredStatus Status    @default(OK)
+  agentVersion   String
+  ipAddress      String
+  cpuPercent     Int
+  memoryPercent  Int
+  createdAt      DateTime? @default(now())
+  stationId      Int
+  station        Station @relation(fields: [stationId], references: [id])
+}
+
+// Para usar enums:
+// https://www.prisma.io/docs/orm/v7/reference/prisma-schema-reference#default-value-for-an-enum
+enum Status {
+  OK
+  INTERNET
+  IA
 }
