@@ -43,6 +43,8 @@ model Station {
   reports         Report[]
 }
 
+// Para que se eliminen los reportes cuando se elimina una estación, se usa onDelete: Cascade
+// https://www.prisma.io/docs/orm/v7/prisma-schema/data-model/relations/referential-actions#cascade
 model Report {
   id             Int       @id @default(autoincrement())
   declaredStatus Status    @default(OK)
@@ -52,7 +54,7 @@ model Report {
   memoryPercent  Int
   createdAt      DateTime? @default(now())
   stationId      Int
-  station        Station   @relation(fields: [stationId], references: [id])
+  station        Station   @relation(fields: [stationId], references: [id], onDelete: Cascade)
 }
 
 // Para usar enums:

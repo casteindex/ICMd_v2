@@ -1,10 +1,15 @@
+### Listar todas las estaciones
+GET http://localhost:3000/api/allstations
+
+###
+
 ### Crear una estación
 POST http://localhost:3000/api/stations
 Content-Type: application/json
 
 {
+  "name": "Estación 10",
   "code": "hola",
-  "name": "Estación 1",
   "location": "FI",
   "operatingSystem": "WINDOWS",
   "classId": 1
@@ -12,16 +17,43 @@ Content-Type: application/json
 
 ###
 
+### Crear otra estación
+POST http://localhost:3000/api/stations
+Content-Type: application/json
+
+{
+  "name": "Estación 2",
+  "code": "asdf12",
+  "location": "FabLab",
+  "operatingSystem": "ASD",
+  "classId": 1
+}
+
+###
+
 ### Obtener una estación
 
-GET http://localhost:3000/api/stations/asd
+GET http://localhost:3000/api/stations/3
 
 ###
 
 ### Update una estación
-PUT http://localhost:3000/api/stations/1
+PUT http://localhost:3000/api/stations/3
 Content-Type: application/json
 
 {
-  "name": ""
+  "name": "nuevo",
+  "classId": 1,
+  "code": "bueno"
+}
+
+###
+
+### Update ignored
+
+PATCH http://localhost:3000/api/stations/3
+Content-Type: application/json
+
+{
+  "ignored": true
 }

@@ -1,9 +1,37 @@
-const prisma = require("../config/db");
-//const { buscarClase } = requiere("./clases");
+const prisma = require('../config/db');
 
 // Lista de sistemas operativos válidos
-const OperatingSystems = ["WINDOWS", "MACOS", "LINUX", "CHROMEOS"];
+const OperatingSystems = ['WINDOWS', 'MACOS', 'LINUX', 'CHROMEOS'];
 
+// Funciones que se repiten
+const getEstacion = async (id) => {
+  return await prisma.station.findUnique({
+    where: { id: Number(id) },
+  });
+};
+const getClase = async (classId) => {
+  return await prisma.class.findUnique({
+    where: { id: classId },
+  });
+};
+
+// GET extra (este muestra todas las estaciones, no es lo que pide el PDF)
+const listarTodasEstaciones = async (req, res) => {
+  try {
+    const estaciones = await prisma.station.findMany({
+      include: { reports: true },
+    });
+    res.status(200).json(estaciones);
+  } catch (error) {
+    console.error('Error al listar estaciones: ', error.message, error.code);
+
+    res.status(500).json({
+      error: 'No fue posible listar las estaciones.',
+    });
+  }
+};
+
+// TODO: este endpoint
 // GET /api/stations?classId=:classId
 const listarEstaciones = async (req, res) => {};
 
@@ -12,15 +40,34 @@ const crearEstacion = async (req, res) => {
   try {
     const { code, name, location, operatingSystem, classId } = req.body;
 
+    if (!code || !name || !location || !operatingSystem || !classId) {
+      return res.status(400).json({
+        error: 'Datos incompletos',
+      });
+    }
     // Verificar si el sistema operativo es válido
     if (!OperatingSystems.includes(operatingSystem)) {
       return res.status(400).json({
-        error: "Sistema operativo inválido",
+        error: 'Sistema operativo inválido',
       });
     }
-
-    // TODO: verificar estado de la clase, etc.
-
+    // Verificar si la existe y clase está activa
+    const clase = await getClase(classId);
+    if (!clase) {
+      return res.status(404).json({
+        error: 'No existe una clase con ese ID',
+      });
+    }
+    if (!clase.active) {
+      return res.status(400).json({
+        error: 'Clase inactiva',
+      });
+    }
+    /*
+    Nota: La validación "el código ya existe dentro de esa clase" es innecesaria
+    aquí, porque el campo `code` en el schema.prisma ya es unique. Así que devuelve
+    un error P2002
+    */
     const estacion = await prisma.station.create({
       data: {
         code: code.trim(),
@@ -33,42 +80,41 @@ const crearEstacion = async (req, res) => {
 
     res.status(201).json(estacion);
   } catch (error) {
-    console.error("Error al crear la estación:", error.code, error.message);
+    console.error('Error al crear la estación:', error.code, error.message);
 
-    if (error.code === "P2002") {
+    if (error.code === 'P2002') {
       return res.status(409).json({
-        error: "Ya existe una estación con ese código",
+        error: 'Ya existe una estación con ese código',
       });
     }
-    if (error.code === "P2003") {
+    if (error.code === 'P2003') {
       return res.status(404).json({
-        error: "No existe una clase con ese ID",
+        error: 'No existe una clase con ese ID',
       });
     }
     res.status(500).json({
-      error: "No fue posible crear la estación",
+      error: 'No fue posible crear la estación',
     });
   }
 };
 
 // GET /api/stations/:id
+// TODO: ver lo del parámetro limit
 const obtenerEstacion = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const estacion = await prisma.station.findUnique({
-      where: { id: Number(id) },
-    });
+    const estacion = await getEstacion(id);
     if (!estacion) {
       return res.status(404).json({
-        error: "No existe una estación con ese ID",
+        error: 'No existe una estación con ese ID',
       });
     }
     res.status(201).json(estacion);
   } catch (error) {
-    console.error("Error al obtener la estación:", error.code, error.message);
+    console.error('Error al obtener la estación:', error.code, error.message);
     res.status(500).json({
-      error: "No fue posible obtener la estación",
+      error: 'No fue posible obtener la estación',
     });
   }
 };
@@ -81,14 +127,26 @@ const updateEstacion = async (req, res) => {
     const { code, name, location, operatingSystem, classId } = req.body;
 
     // Primero verificar que la estación exista
-    const estacion = await prisma.station.findUnique({
-      where: { id: Number(id) },
-    });
+    const estacion = await getEstacion(id);
     if (!estacion) {
       return res.status(404).json({
-        error: "No existe una estación con ese ID",
+        error: 'No existe una estación con ese ID',
       });
     }
+
+    // Validar que la clase de destino exista y esté activa
+    const clase = await getClase(classId);
+    if (!clase) {
+      return res.status(404).json({
+        error: 'Clase de destino no existe',
+      });
+    }
+    if (!clase.active) {
+      return res.status(400).json({
+        error: 'Clase de destino inactiva',
+      });
+    }
+
     /*
     Prisma no modifica los valores si son undefined (este es el caso
     si no se pasó el valor en el req.body). Referencia:
@@ -102,29 +160,110 @@ const updateEstacion = async (req, res) => {
         location,
         operatingSystem,
         classId,
+        updatedAt: new Date(),
       },
     });
 
-    res.status(201).json(estacionActualizada);
+    res.status(200).json(estacionActualizada);
   } catch (error) {
-    console.error("Error al obtener la estación:", error.code, error.message);
+    console.error(
+      'Error al actualizar la estación:',
+      error.code,
+      error.message
+    );
+
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        error: 'Ya existe una estación con ese código',
+      });
+    }
     res.status(500).json({
-      error: "No fue posible actualizar la estación",
+      error: 'No fue posible actualizar la estación',
     });
   }
 };
 
 // PATCH /api/stations/:id/ignore
-const patchEstacion = async (req, res) => {};
+const patchEstacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ignored } = req.body;
+
+    // Primero verificar que la estación exista
+    const estacion = await getEstacion(id);
+    if (!estacion) {
+      return res.status(404).json({
+        error: 'No existe una estación con ese ID',
+      });
+    }
+    // Validar que ignore sea booleano
+    if (typeof ignored !== 'boolean') {
+      return res.status(400).json({
+        error: 'No es booleano',
+      });
+    }
+
+    const estacionActualizada = await prisma.station.update({
+      where: { id: Number(id) },
+      data: {
+        ignored: ignored,
+        updatedAt: new Date(),
+      },
+      select: {
+        id: true,
+        ignored: true,
+        updatedAt: true,
+      },
+    });
+
+    res.status(200).json(estacionActualizada);
+  } catch (error) {
+    console.error(
+      'Error al actualizar la estación:',
+      error.code,
+      error.message
+    );
+
+    res.status(500).json({
+      error: 'No fue posible actualizar la estación',
+    });
+  }
+};
 
 // DELETE /api/stations/:id
-const eliminarEstacion = async (req, res) => {};
+const eliminarEstacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Primero verificar que la estación exista
+    const estacion = await getEstacion(id);
+    if (!estacion) {
+      return res.status(404).json({
+        error: 'No existe una estación con ese ID',
+      });
+    }
+
+    // Eliminar estación y sus reportes
+    await prisma.station.delete({
+      where: { id: Number(id) },
+    });
+    res.status(204); // No manda respuesta
+  } catch (error) {
+    console.error('Error al eliminar la estación:', error.code, error.message);
+
+    res.status(500).json({
+      error: 'No fue posible eliminar la estación',
+    });
+  }
+};
 
 // POST /api/stations/:id/reports
+// TODO: preguntar qué es esto
 const registrarHeartbeat = async (req, res) => {};
 
 module.exports = {
   listarEstaciones,
+  listarTodasEstaciones,
   crearEstacion,
   obtenerEstacion,
   updateEstacion,
