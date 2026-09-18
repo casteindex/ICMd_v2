@@ -1,5 +1,11 @@
 const express = require("express");
-const { listarClases, crearClase } = require("./controllers/clases");
+const {
+  listarClases,
+  crearClase,
+  buscarClase,
+  actualizarClase,
+  eliminarClase,
+} = require("./controllers/clases");
 const {
   listarEstaciones,
   crearEstacion,
@@ -17,6 +23,9 @@ app.use(express.json());
 
 app.get("/api/classes", listarClases);
 app.post("/api/classes", crearClase);
+app.get("/api/classes/:id", buscarClase);
+app.put("/api/classes/:id", actualizarClase);
+app.delete("/api/classes/:id", eliminarClase);
 
 // app.get("/api/stations?classId=:classId", listarEstaciones);
 app.post("/api/stations", crearEstacion);

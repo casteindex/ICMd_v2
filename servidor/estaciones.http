@@ -7,7 +7,7 @@ Content-Type: application/json
   "name": "Estación 1",
   "location": "FI",
   "operatingSystem": "WINDOWS",
-  "classId": 90
+  "classId": 1
 }
 
 ###

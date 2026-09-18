@@ -1,5 +1,5 @@
 const prisma = require("../config/db");
-const { buscarClase } = requiere("./clases");
+//const { buscarClase } = requiere("./clases");
 
 // Lista de sistemas operativos válidos
 const OperatingSystems = ["WINDOWS", "MACOS", "LINUX", "CHROMEOS"];

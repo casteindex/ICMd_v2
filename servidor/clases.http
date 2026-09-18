@@ -1,7 +1,11 @@
-### Listar todas las categorías
+### Listar todas las clases
 GET http://localhost:3000/api/classes
 
-###
+### Listar todas las clases true
+GET http://localhost:3000/api/classes?active=true
+
+### Listar todas las clases false
+GET http://localhost:3000/api/classes?active=false
 
 ### Crear una nueva categoría
 POST http://localhost:3000/api/classes
@@ -28,3 +32,19 @@ Content-Type: application/json
   "location": "Guatemala",
   "schedule": "Mañana a otra hora"
 }
+
+
+### Obtener una clase por id
+
+GET http://localhost:3000/api/classes/3
+
+### Update una estación
+PUT http://localhost:3000/api/classes/3
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### Delete una clase
+DELETE http://localhost:3000/api/classes/2
