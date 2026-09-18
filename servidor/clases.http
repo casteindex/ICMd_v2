@@ -1,0 +1,30 @@
+### Listar todas las categorías
+GET http://localhost:3000/api/classes
+
+###
+
+### Crear una nueva categoría
+POST http://localhost:3000/api/classes
+Content-Type: application/json
+
+{
+  "code": "123",
+  "name": "Hola",
+  "section": "Mundo",
+  "location": "Honduras",
+  "schedule": "Hoy a tal hora"
+}
+
+###
+
+### Crear otra categoria
+POST http://localhost:3000/api/classes
+Content-Type: application/json
+
+{
+  "code": "654",
+  "name": "Adios",
+  "section": "Mundo",
+  "location": "Guatemala",
+  "schedule": "Mañana a otra hora"
+}

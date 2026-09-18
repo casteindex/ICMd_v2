@@ -1,0 +1,27 @@
+### Crear una estación
+POST http://localhost:3000/api/stations
+Content-Type: application/json
+
+{
+  "code": "hola",
+  "name": "Estación 1",
+  "location": "FI",
+  "operatingSystem": "WINDOWS",
+  "classId": 90
+}
+
+###
+
+### Obtener una estación
+
+GET http://localhost:3000/api/stations/asd
+
+###
+
+### Update una estación
+PUT http://localhost:3000/api/stations/1
+Content-Type: application/json
+
+{
+  "name": ""
+}
