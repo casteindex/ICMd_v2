@@ -43,7 +43,7 @@ PUT http://localhost:3000/api/classes/3
 Content-Type: application/json
 
 {
-  "active": false
+  "active": true
 }
 
 ### Delete una clase

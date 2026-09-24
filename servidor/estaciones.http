@@ -8,11 +8,11 @@ POST http://localhost:3000/api/stations
 Content-Type: application/json
 
 {
-  "name": "Estación 10",
+  "name": "Bueno",
   "code": "hola",
   "location": "FI",
   "operatingSystem": "WINDOWS",
-  "classId": 1
+  "classId": 3
 }
 
 ###
@@ -57,3 +57,8 @@ Content-Type: application/json
 {
   "ignored": false
 }
+
+###
+
+### Get estaciones por clase
+GET http://localhost:3000/api/stations?classId=1&q=0

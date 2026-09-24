@@ -34,11 +34,36 @@ const listarTodasEstaciones = async (req, res) => {
 // TODO: este endpoint
 // GET /api/stations?classId=:classId
 const listarEstaciones = async (req, res) => {
-  const { classId, status, q } = req.query;
-
+  const { status, q } = req.query;
+  let { classId } = req.query;
   if (!classId) {
-    // classId es obligatorio
-    res.status(400).json({ error: 'Falta classId.' });
+    res.status(400).json({ error: 'Falta classId' });
+  }
+  classId = Number(classId);
+
+  try {
+    const clase = await getClase(classId);
+    if (!clase) {
+      return res.status(404).json({
+        error: 'No existe una clase con ese ID',
+      });
+    }
+
+    // Para filtrar por texto, usamos el filtro contains que trae prisma. Referencia:
+    // https://www.prisma.io/docs/orm/v6/reference/prisma-client-reference#contains
+    const estaciones = await prisma.station.findMany({
+      where: {
+        classId: classId,
+        name: { contains: q },
+      },
+    });
+    res.status(200).json(estaciones);
+  } catch (error) {
+    console.error('Error al listar estaciones: ', error.code, error.message);
+
+    res.status(500).json({
+      error: 'No fue posible listar las estaciones.',
+    });
   }
 };
 
@@ -91,7 +116,7 @@ const crearEstacion = async (req, res) => {
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Ya existe una estación con ese código',
+        error: 'Ya existe una estación con ese código en esa clase',
       });
     }
     if (error.code === 'P2003') {
