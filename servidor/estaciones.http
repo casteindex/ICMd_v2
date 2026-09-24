@@ -42,7 +42,7 @@ PUT http://localhost:3000/api/stations/3
 Content-Type: application/json
 
 {
-  "name": "nuevo",
+  "name": "nuevo2",
   "classId": 1,
   "code": "bueno"
 }
@@ -55,5 +55,5 @@ PATCH http://localhost:3000/api/stations/3
 Content-Type: application/json
 
 {
-  "ignored": true
+  "ignored": false
 }
