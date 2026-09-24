@@ -1,9 +1,9 @@
-const prisma = require("../config/db");
+const prisma = require('../config/db');
 
 const listarClases = async (req, res) => {
   const { active } = req.query;
   const filtro =
-    active === undefined ? undefined : active === "true" ? true : false;
+    active === undefined ? undefined : active === 'true' ? true : false;
 
   try {
     const clases = await prisma.class.findMany({
@@ -14,10 +14,10 @@ const listarClases = async (req, res) => {
     });
     res.status(200).json(clases);
   } catch (error) {
-    console.error("Error al listar clases: ", error.message, error.code);
+    console.error('Error al listar clases: ', error.code, error.message);
 
     res.status(500).json({
-      error: "No fue posible listar las clases.",
+      error: 'No fue posible listar las clases.',
     });
   }
 };
@@ -29,7 +29,7 @@ const crearClase = async (req, res) => {
     // TODO: hacer las validaciones. No sabemos que es un dato invalido (falta 400 de datos)
     if (!code || !name || !section || !location || !schedule) {
       return res.status(400).json({
-        error: "Datos incompletos. Revise que tenga todos lo campos completos",
+        error: 'Datos incompletos. Revise que tenga todos lo campos completos',
       });
     }
     const clase = await prisma.class.create({
@@ -44,16 +44,16 @@ const crearClase = async (req, res) => {
 
     res.status(201).json(clase);
   } catch (error) {
-    console.error("Error al crear la clase:", error.message);
+    console.error('Error al crear la clase:', error.code, error.message);
 
-    if (error.code === "P2002") {
+    if (error.code === 'P2002') {
       return res.status(409).json({
-        error: "Ya existe una clase con ese código",
+        error: 'Ya existe una clase con ese código',
       });
     }
 
     res.status(500).json({
-      error: "No fue posible crear la clase",
+      error: 'No fue posible crear la clase',
     });
   }
 };
@@ -63,7 +63,7 @@ const buscarClase = async (req, res) => {
   const idNum = Number(id);
   try {
     if (Number.isNaN(idNum)) {
-      return res.status(400).json({ error: "ID inválido" });
+      return res.status(400).json({ error: 'ID inválido' });
     }
 
     const clase = await prisma.class.findUnique({
@@ -81,14 +81,14 @@ const buscarClase = async (req, res) => {
     });
     if (!clase) {
       return res.status(404).json({
-        error: "No existe clase con ese ID",
+        error: 'No existe clase con ese ID',
       });
     }
     res.status(201).json(clase);
   } catch (error) {
-    console.error("Error al buscar la clase:", error.message);
+    console.error('Error al buscar la clase:', error.code, error.message);
     return res.status(500).json({
-      error: "No fue posible buscar la clase",
+      error: 'No fue posible buscar la clase',
     });
   }
 };
@@ -111,15 +111,15 @@ const actualizarClase = async (req, res) => {
     });
     return res.status(200).json(claseActualizada);
   } catch (error) {
-    console.error("Error al actualizar la clase:", error.message, error.code);
-    if (error.code === "P2025") {
+    console.error('Error al actualizar la clase:', error.code, error.message);
+    if (error.code === 'P2025') {
       return res.status(404).json({
-        error: "No existe clase con ese ID",
+        error: 'No existe clase con ese ID',
       });
     }
-    if (error.code === "P2002") {
+    if (error.code === 'P2002') {
       return res.status(409).json({
-        error: "Codigo invalido, pertenece a otra clase",
+        error: 'Codigo invalido, pertenece a otra clase',
       });
     }
   }
@@ -131,27 +131,27 @@ const eliminarClase = async (req, res) => {
     const idNum = Number(id);
 
     if (Number.isNaN(idNum)) {
-      return res.status(400).json({ error: "ID inválido" });
+      return res.status(400).json({ error: 'ID inválido' });
     }
 
     await prisma.class.delete({ where: { id: idNum } });
     res
       .status(204)
-      .json({ mensaje: "Clase eliminada correctamente", id: idNum });
+      .json({ mensaje: 'Clase eliminada correctamente', id: idNum });
   } catch (error) {
-    console.error("Error al eliminar la clase:", error.message, error.code);
-    if (error.code === "P2025") {
+    console.error('Error al eliminar la clase:', error.code, error.message);
+    if (error.code === 'P2025') {
       return res.status(404).json({
-        error: "No existe clase con ese ID",
+        error: 'No existe clase con ese ID',
       });
     }
-    if (error.code === "P2003") {
+    if (error.code === 'P2003') {
       return res.status(409).json({
-        error: "La clase aun tiene estaciones asociadas, no se puede eliminar",
+        error: 'La clase aun tiene estaciones asociadas, no se puede eliminar',
       });
     }
     return res.status(500).json({
-      error: "No fue posible eliminar la clase",
+      error: 'No fue posible eliminar la clase',
     });
   }
 };

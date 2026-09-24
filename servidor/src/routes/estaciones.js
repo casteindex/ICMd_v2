@@ -1,5 +1,6 @@
 const express = require('express');
 const {
+  listarTodasEstaciones,
   listarEstaciones,
   crearEstacion,
   obtenerEstacion,
@@ -11,6 +12,7 @@ const {
 
 const router = express.Router();
 
+router.get('/all', listarTodasEstaciones); // Extra
 router.get('/', listarEstaciones);
 router.post('/', crearEstacion);
 router.get('/:id', obtenerEstacion);

@@ -15,7 +15,7 @@ const getClase = async (classId) => {
   });
 };
 
-// GET extra (este muestra todas las estaciones, no es lo que pide el PDF)
+// GET extra (este muestra todas las estaciones)
 const listarTodasEstaciones = async (req, res) => {
   try {
     const estaciones = await prisma.station.findMany({
@@ -23,7 +23,7 @@ const listarTodasEstaciones = async (req, res) => {
     });
     res.status(200).json(estaciones);
   } catch (error) {
-    console.error('Error al listar estaciones: ', error.message, error.code);
+    console.error('Error al listar estaciones: ', error.code, error.message);
 
     res.status(500).json({
       error: 'No fue posible listar las estaciones.',
@@ -33,7 +33,14 @@ const listarTodasEstaciones = async (req, res) => {
 
 // TODO: este endpoint
 // GET /api/stations?classId=:classId
-const listarEstaciones = async (req, res) => {};
+const listarEstaciones = async (req, res) => {
+  const { classId, status, q } = req.query;
+
+  if (!classId) {
+    // classId es obligatorio
+    res.status(400).json({ error: 'Falta classId.' });
+  }
+};
 
 // POST /api/stations
 const crearEstacion = async (req, res) => {

@@ -1,0 +1,25 @@
+### Listar usuarios
+GET http://localhost:3000/api/auth/
+
+###
+
+### Crear una nuevo usuario
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "admin",
+  "email": "admin@gmail.com",
+  "password": "Password1"
+}
+
+###
+
+### Iniciar sesión
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "Password1"
+}
