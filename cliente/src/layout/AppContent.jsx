@@ -19,13 +19,7 @@ const AppContent = () => {
   const { theme } = useContext(ThemeContext);
 
   return (
-    <div
-      className={`flex min-h-screen flex-col transition-colors duration-200 ${
-        theme === 'oscuro'
-          ? 'bg-slate-900 text-white'
-          : 'bg-slate-50 text-slate-900'
-      }`}
-    >
+    <div className="app-shell" data-theme={theme}>
       <Header />
       <main className="flex-1">
         <Routes>

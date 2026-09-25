@@ -1,0 +1,84 @@
+footer {
+  padding: 60px 20px;
+  margin-top: 100px;
+  border-top: 1px solid #333;
+}
+
+.footer {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-items: center;
+  text-align: center;
+}
+
+/* Redes sociales */
+#redes {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+#redes a {
+  transition: opacity 0.3s;
+}
+
+#redes a:hover {
+  opacity: 0.7;
+}
+
+/* Grid de links */
+.footerTextStyle {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  width: 100%;
+}
+
+.footerTextStyle div p {
+  color: #999;
+  font-size: 13px;
+  margin: 0;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.footerTextStyle div p:hover {
+  color: #fff;
+}
+
+/* Botón */
+#footerButton {
+  background: transparent;
+  border: 1px solid #999;
+  color: #999;
+  padding: 10px 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+#footerButton:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+/* Copyright */
+#copyright {
+  color: #777;
+  font-size: 11px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .footer {
+    gap: 20px;
+  }
+  
+  .footerTextStyle {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
