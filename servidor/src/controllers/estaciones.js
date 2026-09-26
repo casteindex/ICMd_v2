@@ -14,7 +14,31 @@ const getClase = async (classId) => {
     where: { id: classId },
   });
 };
+const calculateStatus = (lastReport, ignored) => {
+  let calculatedStatus;
+  let elapsedSeconds;
 
+  if (!lastReport) {
+    calculatedStatus = 'SIN_REPORTES';
+  } else if (ignored) {
+    calculateStatus = 'IGNORADA';
+  } else {
+    if (['INTERNET', 'IA'].includes(lastReport.declaredStatus)) {
+      calculatedStatus = 'CRITICO';
+    }
+    const now = new Date();
+    const createAt = lastReport.createdAt.getTime;
+    elapsedSeconds = (now - createAt) / 1000;
+    if (elapsedSeconds <= 25) {
+      calculatedStatus = 'OK';
+    } else if (elapsedSeconds >= 40) {
+      calculatedStatus = 'ADVERTENCIA';
+    } else {
+      calculatedStatus = 'CRITICO';
+    }
+  }
+  return { calculatedStatus, elapsedSeconds };
+};
 // GET extra (este muestra todas las estaciones)
 const listarTodasEstaciones = async (req, res) => {
   try {
@@ -56,11 +80,25 @@ const listarEstaciones = async (req, res) => {
         classId: classId,
         name: { contains: q },
       },
+      include: { reports: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });
-    res.status(200).json(estaciones);
+
+    const result = estaciones.map(({ reports, ignored, ...station }) => {
+      const lastReport = reports[0] ?? null;
+      const { calculatedStatus, elapsedSeconds } = calculateStatus(
+        lastReport,
+        ignored
+      );
+      return {
+        ...station,
+        lastReport,
+        calculatedStatus,
+        elapsedSeconds,
+      };
+    });
+    res.status(200).json(result);
   } catch (error) {
     console.error('Error al listar estaciones: ', error.code, error.message);
-
     res.status(500).json({
       error: 'No fue posible listar las estaciones.',
     });
