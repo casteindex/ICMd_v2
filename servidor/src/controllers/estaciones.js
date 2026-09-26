@@ -1,7 +1,14 @@
 const prisma = require('../config/db');
 
 // Lista de sistemas operativos válidos
-const OperatingSystems = ['WINDOWS', 'MACOS', 'LINUX', 'CHROMEOS'];
+const OPERATING_SYSTEMS = ['WINDOWS', 'MACOS', 'LINUX', 'CHROMEOS'];
+const ESTADOS_CALCULADOS = [
+  'SIN_REPORTES',
+  'OK',
+  'ADVERTENCIA',
+  'CRITICO',
+  'IGNORADA',
+];
 
 // Funciones que se repiten
 const getEstacion = async (id) => {
@@ -14,31 +21,41 @@ const getClase = async (classId) => {
     where: { id: classId },
   });
 };
+
 const calculateStatus = (lastReport, ignored) => {
+  if (!lastReport) {
+    return {
+      calculatedStatus: 'SIN_REPORTES',
+      elapsedSeconds: null,
+    };
+  }
+
+  const { declaredStatus, createdAt } = lastReport;
   let calculatedStatus;
   let elapsedSeconds;
 
-  if (!lastReport) {
-    calculatedStatus = 'SIN_REPORTES';
-  } else if (ignored) {
-    calculateStatus = 'IGNORADA';
+  if (ignored) {
+    calculatedStatus = 'IGNORADA';
   } else {
-    if (['INTERNET', 'IA'].includes(lastReport.declaredStatus)) {
-      calculatedStatus = 'CRITICO';
-    }
+    // Si no se ignora
     const now = new Date();
-    const createAt = lastReport.createdAt.getTime;
-    elapsedSeconds = (now - createAt) / 1000;
+    const reportTime = createdAt.getTime();
+    elapsedSeconds = (now - reportTime) / 1000;
     if (elapsedSeconds <= 25) {
       calculatedStatus = 'OK';
-    } else if (elapsedSeconds >= 40) {
+    } else if (elapsedSeconds <= 40) {
       calculatedStatus = 'ADVERTENCIA';
     } else {
+      calculatedStatus = 'CRITICO';
+    }
+
+    if (['INTERNET', 'IA'].includes(declaredStatus)) {
       calculatedStatus = 'CRITICO';
     }
   }
   return { calculatedStatus, elapsedSeconds };
 };
+
 // GET extra (este muestra todas las estaciones)
 const listarTodasEstaciones = async (req, res) => {
   try {
@@ -55,11 +72,16 @@ const listarTodasEstaciones = async (req, res) => {
   }
 };
 
-// TODO: este endpoint
 // GET /api/stations?classId=:classId
 const listarEstaciones = async (req, res) => {
   const { status, q } = req.query;
   let { classId } = req.query;
+
+  filtro_status = status.toUpperCase();
+  if (status && !ESTADOS_CALCULADOS.includes(filtro_status)) {
+    res.status(400).json({ error: `Filtro: status=${status} inválido` });
+  }
+
   if (!classId) {
     res.status(400).json({ error: 'Falta classId' });
   }
@@ -83,7 +105,7 @@ const listarEstaciones = async (req, res) => {
       include: { reports: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });
 
-    const result = estaciones.map(({ reports, ignored, ...station }) => {
+    let result = estaciones.map(({ reports, ignored, ...station }) => {
       const lastReport = reports[0] ?? null;
       const { calculatedStatus, elapsedSeconds } = calculateStatus(
         lastReport,
@@ -96,6 +118,12 @@ const listarEstaciones = async (req, res) => {
         elapsedSeconds,
       };
     });
+
+    if (filtro_status) {
+      result = result.filter(
+        (estacion) => estacion.calculatedStatus === filtro_status
+      );
+    }
     res.status(200).json(result);
   } catch (error) {
     console.error('Error al listar estaciones: ', error.code, error.message);
@@ -116,7 +144,7 @@ const crearEstacion = async (req, res) => {
       });
     }
     // Verificar si el sistema operativo es válido
-    if (!OperatingSystems.includes(operatingSystem)) {
+    if (!OPERATING_SYSTEMS.includes(operatingSystem)) {
       return res.status(400).json({
         error: 'Sistema operativo inválido',
       });
