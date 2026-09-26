@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { useContext } from 'react';
 
 import ThemeContext from '../contexts/ThemeContext';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -25,12 +26,14 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/clases" element={<Clases />} />
-          <Route path="/clases/:id" element={<DetalleClase />} />
-          <Route path="/estaciones" element={<Estaciones />} />
-          <Route path="/estaciones/:id" element={<DetalleEstacion />} />
-          <Route path="/simulador" element={<Simulador />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/clases" element={<Clases />} />
+            <Route path="/clases/:id" element={<DetalleClase />} />
+            <Route path="/estaciones" element={<Estaciones />} />
+            <Route path="/estaciones/:id" element={<DetalleEstacion />} />
+            <Route path="/simulador" element={<Simulador />} />
+          </Route>
           <Route path="*" element={<NoEncontrado />} />
         </Routes>
       </main>
