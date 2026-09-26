@@ -1,19 +1,57 @@
-import { useParams } from 'react-router-dom';
-import EmptyPage from '../components/EmptyPage';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { obtenerClase } from '../services/clasesService';
 
 const DetalleClase = () => {
 	const { id } = useParams();
+	const [clase, setClase] = useState(null);
+	const [status, setStatus] = useState('loading');
+
+	useEffect(() => {
+		let active = true;
+
+		obtenerClase(id)
+			.then((result) => {
+				if (!active) return;
+				setClase(result);
+				setStatus(result ? 'success' : 'empty');
+			})
+			.catch(() => {
+				if (active) setStatus('error');
+			});
+
+		return () => { active = false; };
+	}, [id]);
 
 	return (
-		<EmptyPage
-			eyebrow="Clases / Detalle"
-			title="Detalle de clase"
-			subtitle={`Vista de la clase ${id}.`}
-			emptyTitle="Sin información de clase"
-			emptyDescription="Los datos del grupo, horario, espacio y estaciones asociadas se mostrarán aquí."
-			backTo="/clases"
-			backLabel="Volver a clases"
-		/>
+		<div className="page-wrap dashboard-page">
+			<Link className="back-link" to="/clases">Volver a clases</Link>
+			{status === 'loading' && <p className="data-message" role="status">Cargando detalle de clase...</p>}
+			{status === 'error' && <p className="data-message data-error" role="alert">No se pudo cargar el detalle de la clase.</p>}
+			{status === 'empty' && (
+				<div className="empty-page-state">
+					<h2>No encontramos esa clase</h2>
+					<p>Revisa el identificador o vuelve al listado de clases.</p>
+				</div>
+			)}
+			{status === 'success' && (
+				<>
+					<section className="dashboard-heading class-detail-heading">
+						<div>
+							<p className="section-kicker">{clase.code} / Sección {clase.section}</p>
+							<h1>{clase.name}</h1>
+							<p className="dashboard-subtitle">Detalle del grupo y sus recursos.</p>
+						</div>
+						<span className="class-status"><span /> {clase.active ? 'Activa' : 'Inactiva'}</span>
+					</section>
+					<section className="class-detail-grid" aria-label="Informacion de la clase">
+						<div className="class-detail-field"><span>Ubicación</span><strong>{clase.location}</strong></div>
+						<div className="class-detail-field"><span>Horario</span><strong>{clase.schedule}</strong></div>
+						<div className="class-detail-field"><span>Estaciones asignadas</span><strong>{clase._count.stations}</strong></div>
+					</section>
+				</>
+			)}
+		</div>
 	);
 };
 
