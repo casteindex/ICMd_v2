@@ -32,8 +32,7 @@ Content-Type: application/json
 ###
 
 ### Obtener una estación
-
-GET http://localhost:3000/api/stations/3
+GET http://localhost:3000/api/stations/4?limit=1
 
 ###
 
@@ -50,7 +49,6 @@ Content-Type: application/json
 ###
 
 ### Update ignored
-
 PATCH http://localhost:3000/api/stations/3
 Content-Type: application/json
 
@@ -61,4 +59,23 @@ Content-Type: application/json
 ###
 
 ### Get estaciones por clase
-GET http://localhost:3000/api/stations?classId=1&status=critico
+GET http://localhost:3000/api/stations?classId=1&status=ignorada
+
+###
+
+### Crear reporte en una estación
+POST http://localhost:3000/api/stations/4/reports
+Content-Type: application/json
+
+{
+  "declaredStatus": "OK",
+  "agentVersion": "1.0.0",
+  "ipAddress": "192.125.45.6",
+  "cpuPercent": 46,
+  "memoryPercent": 12
+}
+
+###
+
+### Detalle de estación
+GET http://localhost:3000/api/stations/4

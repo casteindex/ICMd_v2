@@ -2,6 +2,7 @@ const prisma = require('../config/db');
 
 // Lista de sistemas operativos válidos
 const OPERATING_SYSTEMS = ['WINDOWS', 'MACOS', 'LINUX', 'CHROMEOS'];
+const ESTADOS_DECLARADOS = ['OK', 'INTERNET', 'IA'];
 const ESTADOS_CALCULADOS = [
   'SIN_REPORTES',
   'OK',
@@ -113,9 +114,10 @@ const listarEstaciones = async (req, res) => {
       );
       return {
         ...station,
+        ignored,
         lastReport,
-        calculatedStatus,
         elapsedSeconds,
+        calculatedStatus,
       };
     });
 
@@ -138,7 +140,13 @@ const crearEstacion = async (req, res) => {
   try {
     const { code, name, location, operatingSystem, classId } = req.body;
 
-    if (!code || !name || !location || !operatingSystem || !classId) {
+    if (
+      !code ||
+      !name ||
+      !location ||
+      !operatingSystem ||
+      classId === undefined
+    ) {
       return res.status(400).json({
         error: 'Datos incompletos',
       });
@@ -197,18 +205,49 @@ const crearEstacion = async (req, res) => {
 };
 
 // GET /api/stations/:id
-// TODO: ver lo del parámetro limit
 const obtenerEstacion = async (req, res) => {
   try {
     const { id } = req.params;
+    let { limit } = req.query;
+    limit = !limit ? 20 : Number(limit);
 
-    const estacion = await getEstacion(id);
+    if (Number.isNaN(limit) || limit < 1 || limit > 100) {
+      return res.status(400).json({
+        error: 'Límite inválido',
+      });
+    }
+
+    const estacion = await prisma.station.findUnique({
+      where: { id: Number(id) },
+      include: {
+        class: true,
+        reports: {
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+        },
+      },
+    });
+
     if (!estacion) {
       return res.status(404).json({
         error: 'No existe una estación con ese ID',
       });
     }
-    res.status(201).json(estacion);
+
+    const { reports, class: clase, ...station } = estacion;
+    const lastReport = reports[0] ?? null;
+    const { calculatedStatus, elapsedSeconds } = calculateStatus(
+      lastReport,
+      false // En este reporte nunca se ignora el estado
+    );
+    res.status(201).json({
+      station,
+      class: clase,
+      lastReport,
+      elapsedSeconds,
+      calculatedStatus,
+      reports,
+    });
   } catch (error) {
     console.error('Error al obtener la estación:', error.code, error.message);
     res.status(500).json({
@@ -356,8 +395,89 @@ const eliminarEstacion = async (req, res) => {
 };
 
 // POST /api/stations/:id/reports
-// TODO: preguntar qué es esto
-const registrarHeartbeat = async (req, res) => {};
+const registrarHeartbeat = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      declaredStatus,
+      agentVersion,
+      ipAddress,
+      cpuPercent,
+      memoryPercent,
+    } = req.body;
+
+    // Primero verificar que la estación exista
+    const estacion = await getEstacion(id);
+    if (!estacion) {
+      return res.status(404).json({
+        error: 'No existe una estación con ese ID',
+      });
+    }
+
+    // Resto de validaciones
+    if (
+      !declaredStatus ||
+      !agentVersion ||
+      !ipAddress ||
+      cpuPercent === undefined ||
+      memoryPercent === undefined
+    ) {
+      return res.status(400).json({
+        error: 'Datos incompletos',
+      });
+    }
+    if (!ESTADOS_DECLARADOS.includes(declaredStatus)) {
+      return res.status(400).json({
+        error: 'Estado desconocido',
+      });
+    }
+    if (
+      Number.isNaN(Number(cpuPercent)) ||
+      Number.isNaN(Number(memoryPercent))
+    ) {
+      return res.status(400).json({
+        error: 'Porcentaje inválido',
+      });
+    }
+    if (
+      cpuPercent < 0 ||
+      cpuPercent > 100 ||
+      memoryPercent < 0 ||
+      memoryPercent > 100
+    ) {
+      return res.status(400).json({
+        error: 'Procentaje fuera de rango',
+      });
+    }
+
+    const lastReport = await prisma.report.create({
+      data: {
+        declaredStatus,
+        agentVersion,
+        ipAddress,
+        cpuPercent,
+        memoryPercent,
+        stationId: Number(id),
+      },
+    });
+
+    const { elapsedSeconds, calculatedStatus } = calculateStatus(
+      lastReport,
+      false // En este reporte no se ignora el estado
+    );
+    res.status(201).json({
+      lastReport,
+      elapsedSeconds,
+      calculatedStatus,
+    });
+  } catch (error) {
+    console.error('Error al crear reporte:', error.code, error.message);
+
+    res.status(500).json({
+      error: 'No fue posible crear reporte',
+    });
+  }
+};
 
 module.exports = {
   listarEstaciones,
