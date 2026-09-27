@@ -4,3 +4,4 @@ GET http://localhost:3000/api/health
 ###
 
 ### Dashboard
+GET http://localhost:3000/api/dashboard/summary?classId=1

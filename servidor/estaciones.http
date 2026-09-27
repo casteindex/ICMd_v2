@@ -53,7 +53,7 @@ PATCH http://localhost:3000/api/stations/3
 Content-Type: application/json
 
 {
-  "ignored": false
+  "ignored": true
 }
 
 ###
@@ -64,7 +64,7 @@ GET http://localhost:3000/api/stations?classId=1&status=ignorada
 ###
 
 ### Crear reporte en una estación
-POST http://localhost:3000/api/stations/4/reports
+POST http://localhost:3000/api/stations/9/reports
 Content-Type: application/json
 
 {
@@ -72,7 +72,7 @@ Content-Type: application/json
   "agentVersion": "1.0.0",
   "ipAddress": "192.125.45.6",
   "cpuPercent": 46,
-  "memoryPercent": 12
+  "memoryPercent": 70
 }
 
 ###

@@ -36,7 +36,7 @@ Content-Type: application/json
 
 ### Obtener una clase por id
 
-GET http://localhost:3000/api/classes/3
+GET http://localhost:3000/api/classes/1
 
 ### Update una estación
 PUT http://localhost:3000/api/classes/3

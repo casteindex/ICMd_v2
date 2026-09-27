@@ -1,6 +1,5 @@
 const prisma = require('../config/db');
-const { getClase } = require('./estaciones');
-
+const { getClase, calculateStatus } = require('./estaciones');
 const getResumen = async (req, res) => {
   try {
     let { classId } = req.query;
@@ -27,16 +26,26 @@ const getResumen = async (req, res) => {
         },
       },
     });
-
+    const estados = estaciones.map(({ reports, ignored, ...station }) => {
+      const lastReport = reports[0] ?? null;
+      const { calculatedStatus } = calculateStatus(lastReport, ignored);
+      return calculatedStatus;
+    });
+    console.log('MAP', estados);
     // Encontrar cantidad de cada estado
-    const active = 0,
-      ok = 0,
-      warning = 0,
-      critical = 0,
-      ignored = 0;
-    for (const estacion of estaciones) {
-    }
-  } catch (error) {}
+    const active = estados.filter((estado) => estado !== 'IGNORADA').length;
+    const ok = estados.filter((estado) => estado === 'OK').length;
+    const warning = estados.filter((estado) => estado === 'ADVERTENCIA').length;
+    const critical = estados.filter((estado) => estado === 'CRITICO').length;
+    const ignored = estados.filter((estado) => estado === 'IGNORADA').length;
+
+    res.status(200).json({ classId, active, ok, warning, critical, ignored });
+  } catch (error) {
+    console.error('Error al mostrar resumen: ', error.code, error.message);
+    res.status(500).json({
+      error: 'No fue posible mostrar el resumen.',
+    });
+  }
 };
 
 module.exports = {

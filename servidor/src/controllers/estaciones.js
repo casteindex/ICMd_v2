@@ -495,4 +495,6 @@ module.exports = {
   patchEstacion,
   eliminarEstacion,
   registrarHeartbeat,
+  getClase,
+  calculateStatus,
 };
