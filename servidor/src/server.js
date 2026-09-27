@@ -14,16 +14,23 @@ const PORT = Number(process.env.PORT) || 3000;
 
 const corsOptions = {
   origin: [
-    'http://127.0.0.1:5500', // liveserver
-    'http://localhost:5500', // liveserver
-    `http://127.0.0.1:5500${Number(process.env.CLIENT_PORT) || 5731}`,
-    `http://localhost:5500${Number(process.env.CLIENT_PORT) || 5731}`,
+    'http://127.0.0.1:5173',
+    'http://localhost:5173',
+    'http://127.0.0.1:5500',
+    'http://localhost:5500',
   ],
   optionsSuccessStatus: 200,
 };
 
 app.use(express.json());
 app.use(cors(corsOptions));
+
+//extra: una bitacora de todas las solicitudes que llegan al servidor
+app.use((req, res, next) => {
+    console.log(`Se recibio una solicitud ${req.method} a la ruta: ${req.url}']}`);
+    next();
+});
+
 
 // Documentación de Swagger UI en /swagger-docs
 setupSwagger(app);

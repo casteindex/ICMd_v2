@@ -1,140 +1,50 @@
-const estacionesDemo = [
-    {
-        id: 1,
-        code: 'PC-01',
-        name: 'Estacion 1',
-        location: 'Fila 1',
-        operatingSystem: 'WINDOWS',
-        classId: 1,
-        status: 'OK',
-        cpuPercent: 35,
-        memoryPercent: 62,
-        lastReport: 'hace 12s',
-        ignored: false
-    },
-    {
-        id: 2,
-        code: 'PC-02',
-        name: 'Estacion 2',
-        location: 'Fila 2',
-        operatingSystem: 'LINUX',
-        classId: 1,
-        status: 'INTERNET',
-        cpuPercent: 51,
-        memoryPercent: 44,
-        lastReport: 'hace 33s',
-        ignored: false
-    }
-    ,
-    {
-        id: 3,
-        code: 'PC-03',
-        name: 'Estacion 3',
-        location: 'Fila 3',
-        operatingSystem: 'MACOS',
-        classId: 1, status: 'IA',
-        cpuPercent: null,
-        memoryPercent: null,
-        lastReport: 'hace 2m',
-        ignored: false
-    }
-    ,
-    {
-        id: 4,
-        code: 'PC-04',
-        name: 'Estacion 4',
-        location: 'Fila 4',
-        operatingSystem: 'WINDOWS',
-        classId: 1,
-        status: 'OK',
-        cpuPercent: null,
-        memoryPercent: null,
-        lastReport: 'hace 5m',
-        ignored: true
-    }
-    ,
-    {
-        id: 5,
-        code: 'PC-05',
-        name: 'Estacion 5',
-        location: 'Fila 5',
-        operatingSystem: 'CHROMEOS',
-        classId: 1,
-        status: 'OK',
-        cpuPercent: 29,
-        memoryPercent: 38,
-        lastReport: 'hace 18s',
-        ignored: false
-    },
-];
+import { apiFetch } from './api';
 
-const copyEstacion = (estacion) => ({ ...estacion });
+const formatLastReport = (lastReport) => {
+    if (!lastReport?.createdAt) return 'Sin reportes';
 
-export const crearEstacionSimulada = async ({ classId, code, name, location, operatingSystem }) => {
-    const normalizedCode = code.trim().toUpperCase();
-    const normalizedName = name.trim();
-    const normalizedLocation = location.trim();
-
-    if (!normalizedCode || !normalizedName || !normalizedLocation || !operatingSystem) {
-        throw new Error('Completa todos los campos.');
-    }
-    if (normalizedCode.length < 3 || normalizedCode.length > 20) {
-        throw new Error('El código debe tener entre 3 y 20 caracteres.');
-    }
-    if (normalizedName.length < 3) {
-        throw new Error('El nombre debe tener al menos 3 caracteres.');
-    }
-    if (estacionesDemo.some((station) => station.classId === Number(classId) && station.code === normalizedCode)) {
-        throw new Error('Ya existe una estación con ese código en esta clase.');
-    }
-
-    const station = {
-        id: Math.max(...estacionesDemo.map((item) => item.id)) + 1,
-        code: normalizedCode,
-        name: normalizedName,
-        location: normalizedLocation,
-        operatingSystem,
-        classId: Number(classId),
-        status: 'OK',
-        cpuPercent: null,
-        memoryPercent: null,
-        lastReport: 'sin reportes',
-        ignored: false,
-    };
-
-    estacionesDemo.push(station);
-    return copyEstacion(station);
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(lastReport.createdAt).getTime()) / 1000));
+    if (elapsedSeconds < 60) return `hace ${elapsedSeconds}s`;
+    return `hace ${Math.floor(elapsedSeconds / 60)}m`;
 };
 
-export const listarEstaciones = async ({ classId = 1 } = {}) => (
-    estacionesDemo.filter((estacion) => estacion.classId === Number(classId)).map(copyEstacion)
-);
+const mapStation = (station) => ({
+    ...station,
+    status: station.calculatedStatus || 'SIN_REPORTES',
+    cpuPercent: station.lastReport?.cpuPercent ?? null,
+    memoryPercent: station.lastReport?.memoryPercent ?? null,
+    lastReport: formatLastReport(station.lastReport),
+});
 
-export const obtenerEstacion = async (id) => {
-    const estacion = estacionesDemo.find((item) => item.id === Number(id));
-    return estacion ? copyEstacion(estacion) : null;
-};
+export const listarEstaciones = ({ classId, q = '' } = {}) =>
+    apiFetch(`/stations?classId=${classId}&q=${encodeURIComponent(q)}`)
+        .then((stations) => stations.map(mapStation));
 
-export const actualizarEstacionSimulada = async (id, changes) => {
-    const station = estacionesDemo.find((item) => item.id === Number(id));
-    if (!station) throw new Error('La estación no existe.');
+export const obtenerEstacion = (id) => apiFetch(`/stations/${id}`)
+    .then((data) => ({
+        ...data,
+        station: mapStation({
+            ...data.station,
+            calculatedStatus: data.calculatedStatus,
+            lastReport: data.lastReport,
+        }),
+    }));
 
-    const code = changes.code.trim().toUpperCase();
-    const name = changes.name.trim();
-    const location = changes.location.trim();
-    if (!code || !name || !location || !changes.operatingSystem) throw new Error('Completa todos los campos.');
-    if (code.length < 3 || code.length > 20) throw new Error('El código debe tener entre 3 y 20 caracteres.');
-    if (name.length < 3) throw new Error('El nombre debe tener al menos 3 caracteres.');
-    if (estacionesDemo.some((item) => item.id !== station.id && item.classId === station.classId && item.code === code)) {
-        throw new Error('Ya existe una estación con ese código en esta clase.');
-    }
+export const crearEstacion = (data) => apiFetch('/stations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+});
 
-    Object.assign(station, { code, name, location, operatingSystem: changes.operatingSystem });
-    return copyEstacion(station);
-};
+export const actualizarEstacion = (id, data) => apiFetch(`/stations/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+});
 
-export const eliminarEstacionSimulada = async (id) => {
-    const index = estacionesDemo.findIndex((item) => item.id === Number(id));
-    if (index === -1) throw new Error('La estación no existe.');
-    estacionesDemo.splice(index, 1);
-};
+export const cambiarIgnorada = (id, ignored) => apiFetch(`/stations/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ ignored }),
+});
+
+export const eliminarEstacion = (id) => apiFetch(`/stations/${id}`, {
+    method: 'DELETE',
+});

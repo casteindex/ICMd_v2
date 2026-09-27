@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { listarClases } from '../services/clasesService';
 import { listarEstaciones } from '../services/estacionesService';
-import { enviarReporteSimulado } from '../services/reportsService';
+import { enviarReporte } from '../services/reportsService';
 
 const Simulador = () => {
-    //placeholders que es texto en este caso
+    const [clases, setClases] = useState([]);
+    const [classId, setClassId] = useState('');
     const [estaciones, setEstaciones] = useState([]);
     const [stationId, setStationId] = useState('');
     const [declaredStatus, setDeclaredStatus] = useState('OK');
@@ -16,11 +18,25 @@ const Simulador = () => {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        listarEstaciones({ classId: 1 }).then((result) => {
-            setEstaciones(result);
-            setStationId(String(result[0]?.id || ''));
+        listarClases({ active: true }).then((result) => {
+            setClases(result);
+            setClassId(String(result[0]?.id || ''));
         });
     }, []);
+
+    useEffect(() => {
+        if (!classId) {
+            setEstaciones([]);
+            setStationId('');
+            return;
+        }
+
+        listarEstaciones({ classId }).then((result) => {
+            const availableStations = result.filter((station) => !station.ignored);
+            setEstaciones(availableStations);
+            setStationId(String(availableStations[0]?.id || ''));
+        });
+    }, [classId]);
 
     const selectedStation = useMemo(
         () => estaciones.find((station) => station.id === Number(stationId)),
@@ -29,17 +45,23 @@ const Simulador = () => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        if (!selectedStation) {
+            setRequestState('error');
+            setMessage('Selecciona una estación disponible.');
+            return;
+        }
         setRequestState('loading');
         setMessage('');
 
         try {
-            const report = await enviarReporteSimulado(selectedStation, {
+            const response = await enviarReporte(selectedStation.id, {
                 declaredStatus,
                 agentVersion,
                 ipAddress,
                 cpuPercent,
                 memoryPercent,
             });
+            const report = { ...response.lastReport, calculatedStatus: response.calculatedStatus, stationCode: selectedStation.code };
             setHistory((current) => [report, ...current]);
             setRequestState('success');
             setMessage(`${report.stationCode} declaró ${report.declaredStatus} correctamente.`);
@@ -57,14 +79,20 @@ const Simulador = () => {
                     <h1>Simulador</h1>
                     <p className="dashboard-subtitle">Envia un reporte en base a una simulacion</p>
                 </div>
-                <span className="simulator-note">Datos simulados</span>
+                <span className="simulator-note">Conectado a la API</span>
             </section>
 
             <div className="simulator-layout">
                 <form className="simulator-form" onSubmit={handleSubmit}>
+                    <label htmlFor="simulator-class">Clase</label>
+                    <select id="simulator-class" value={classId} onChange={(event) => setClassId(event.target.value)} required>
+                        <option value="" disabled>Selecciona una clase</option>
+                        {clases.map((clase) => <option value={clase.id} key={clase.id}>{clase.code} · {clase.name}</option>)}
+                    </select>
+
                     <label htmlFor="simulator-station">Estacion</label>
-                    <select id="simulator-station" value={stationId} onChange={(event) => setStationId(event.target.value)} required>
-                        <option value="" disabled>Selecciona una estacion</option>
+                    <select id="simulator-station" value={stationId} onChange={(event) => setStationId(event.target.value)} required disabled={!classId || estaciones.length === 0}>
+                        <option value="" disabled>{estaciones.length ? 'Selecciona una estacion' : 'No hay estaciones disponibles'}</option>
                         {estaciones.map((station) => <option value={station.id} key={station.id}>{station.code} · {station.name}</option>)}
                     </select>
 
@@ -100,7 +128,7 @@ const Simulador = () => {
                     </div>
 
                     {message && <p className={`simulator-message simulator-${requestState}`} role={requestState === 'error' ? 'alert' : 'status'}>{message}</p>}
-                    <button className="button button-primary simulator-submit" type="submit" disabled={requestState === 'loading'}>{requestState === 'loading' ? 'Enviando...' : 'Enviar reporte'}
+                    <button className="button button-primary simulator-submit" type="submit" disabled={requestState === 'loading' || !selectedStation}>{requestState === 'loading' ? 'Enviando...' : 'Enviar reporte'}
                         <span aria-hidden="true"></span>
                     </button>
                 </form>

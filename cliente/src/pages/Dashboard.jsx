@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { listarClases } from '../services/clasesService';
 import { listarEstaciones } from '../services/estacionesService';
 
-const statusLabels = { OK: 'Ok', INTERNET: 'Advertencia', IA: 'Crítico' };
+const statusLabels = { OK: 'Ok', ADVERTENCIA: 'Advertencia', CRITICO: 'Crítico', SIN_REPORTES: 'Sin reportes' };
 
 const Dashboard = () => {
 	const [clases, setClases] = useState([]);
@@ -31,8 +31,8 @@ const Dashboard = () => {
 	const counts = useMemo(() => ({
 		active: estaciones.filter((station) => !station.ignored).length,
 		ok: estaciones.filter((station) => station.status === 'OK' && !station.ignored).length,
-		warning: estaciones.filter((station) => station.status === 'INTERNET' && !station.ignored).length,
-		critical: estaciones.filter((station) => station.status === 'IA' && !station.ignored).length,
+		warning: estaciones.filter((station) => station.status === 'ADVERTENCIA' && !station.ignored).length,
+		critical: estaciones.filter((station) => station.status === 'CRITICO' && !station.ignored).length,
 		ignored: estaciones.filter((station) => station.ignored).length,
 	}), [estaciones]);
 
@@ -46,7 +46,7 @@ const Dashboard = () => {
 					{clases.map((clase) => <option value={clase.id} key={clase.id}>{clase.code} · {clase.name}</option>)}
 				</select>
 				<strong>{selectedClass ? `Sección ${selectedClass.section} · ${selectedClass.location}` : 'Cargando clase...'}</strong>
-				<span className="api-status"><span /> API simulada</span>
+				<span className="api-status"><span /> API conectada</span>
 			</section>
 
 			<section className="monitor-stats" aria-label="Resumen de estaciones">
@@ -73,8 +73,9 @@ const Dashboard = () => {
 					<select aria-label="Filtrar por estado" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
 						<option value="all">Todos los estados</option>
 						<option value="OK">Ok</option>
-						<option value="INTERNET">Advertencia</option>
-						<option value="IA">Critico</option>
+						<option value="ADVERTENCIA">Advertencia</option>
+						<option value="CRITICO">Critico</option>
+						<option value="SIN_REPORTES">Sin reportes</option>
 						<option value="ignored">Ignorada</option>
 					</select>
 				</div>

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { obtenerClase } from '../services/clasesService';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { actualizarClase, eliminarClase, obtenerClase } from '../services/clasesService';
+import ClassModal from '../components/ClassModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const formatDate = (date) => new Intl.DateTimeFormat('es', {
 	day: '2-digit',
@@ -12,6 +14,11 @@ const DetalleClase = () => {
 	const { id } = useParams();
 	const [clase, setClase] = useState(null);
 	const [status, setStatus] = useState('loading');
+	const [isEditOpen, setIsEditOpen] = useState(false);
+	const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+	const [formError, setFormError] = useState('');
+	const [form, setForm] = useState(null);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		let active = true;
@@ -28,6 +35,31 @@ const DetalleClase = () => {
 
 		return () => { active = false; };
 	}, [id]);
+
+	const updateField = (event) => {
+		const { name, value, type, checked } = event.target;
+		setForm((current) => ({ ...current, [name]: type === 'checkbox' ? checked : value }));
+	};
+
+	const handleUpdate = async (event) => {
+		event.preventDefault();
+		try {
+			await actualizarClase(id, form);
+			navigate('/clases');
+		} catch (error) {
+			setFormError(error.message);
+		}
+	};
+
+	const handleDelete = async () => {
+		try {
+			await eliminarClase(id);
+			navigate('/clases');
+		} catch (error) {
+			setFormError(error.message);
+			setIsDeleteOpen(false);
+		}
+	};
 
 	return (
 		<div className="page-wrap dashboard-page">
@@ -50,6 +82,10 @@ const DetalleClase = () => {
 						</div>
 						<span className="class-status"><span /> {clase.active ? 'Activa' : 'Inactiva'}</span>
 					</section>
+					<div className="station-detail-actions">
+						<button className="button button-primary" type="button" onClick={() => { setForm({ code: clase.code, name: clase.name, section: clase.section, location: clase.location, schedule: clase.schedule, active: Boolean(clase.active) }); setFormError(''); setIsEditOpen(true); }}>Editar clase</button>
+						<button className="modal-danger" type="button" onClick={() => { setFormError(''); setIsDeleteOpen(true); }}>Eliminar clase</button>
+					</div>
 					<section className="class-detail-grid" aria-label="Informacion de la clase">
 						<div className="class-detail-field"><span>Ubicación</span><strong>{clase.location}</strong></div>
 						<div className="class-detail-field"><span>Horario</span><strong>{clase.schedule}</strong></div>
@@ -57,6 +93,8 @@ const DetalleClase = () => {
 						<div className="class-detail-field"><span>Fecha de creación</span><strong>{formatDate(clase.createdAt)}</strong></div>
 						<div className="class-detail-field"><span>Última actualización</span><strong>{formatDate(clase.updatedAt)}</strong></div>
 					</section>
+					{isEditOpen && form && <ClassModal form={form} formError={formError} isEditing onChange={updateField} onClose={() => setIsEditOpen(false)} onSubmit={handleUpdate} />}
+					{isDeleteOpen && <ConfirmModal stationName={clase.name} onCancel={() => setIsDeleteOpen(false)} onConfirm={handleDelete} />}
 				</>
 			)}
 		</div>

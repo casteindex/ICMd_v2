@@ -4,7 +4,7 @@ const getResumen = async (req, res) => {
   try {
     let { classId } = req.query;
     if (!classId) {
-      res.status(400).json({ error: 'Falta classId' });
+      return res.status(400).json({ error: 'Falta classId' });
     }
     classId = Number(classId);
 

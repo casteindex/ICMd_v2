@@ -595,10 +595,54 @@
   letter-spacing: 0;
 }
 
+.class-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.inactive-classes-section {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+
+.inactive-classes-table-wrap {
+  margin-top: 18px;
+}
+
+.reactivate-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.reactivate-control input {
+  accent-color: var(--blue);
+}
+
 .dashboard-subtitle {
   margin-top: 9px;
   color: var(--muted);
   font-size: 14px;
+}
+
+.station-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 22px 0;
+}
+
+@media (max-width: 620px) {
+  .class-heading-actions {
+    justify-content: flex-start;
+  }
 }
 
 .today-label {
@@ -1470,9 +1514,24 @@
   background: #392000;
 }
 
+.status-advertencia {
+  color: #e7a500;
+  background: #392000;
+}
+
 .status-ia {
   color: #f17a7f;
   background: #450b0d;
+}
+
+.status-critico {
+  color: #f17a7f;
+  background: #450b0d;
+}
+
+.status-sin-reportes {
+  color: #60a5fa;
+  background: #0b2445;
 }
 
 .status-ignored {
@@ -1488,8 +1547,20 @@
   background: #e7a500;
 }
 
+.status-advertencia>span {
+  background: #e7a500;
+}
+
 .status-ia>span {
   background: #f17a7f;
+}
+
+.status-critico>span {
+  background: #f17a7f;
+}
+
+.status-sin-reportes>span {
+  background: #60a5fa;
 }
 
 .status-ignored>span {
@@ -1578,8 +1649,10 @@
 }
 
 .station-actions button {
-  width: 29px;
-  height: 29px;
+  width: auto;
+  min-height: 29px;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; background: rgb(4 9 18 / 62%); }

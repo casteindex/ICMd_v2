@@ -82,13 +82,13 @@ const listarEstaciones = async (req, res) => {
   const { status, q } = req.query;
   let { classId } = req.query;
 
-  filtro_status = status.toUpperCase();
+  const filtro_status = status ? status.toUpperCase() : undefined;
   if (status && !ESTADOS_CALCULADOS.includes(filtro_status)) {
-    res.status(400).json({ error: `Filtro: status=${status} inválido` });
+    return res.status(400).json({ error: `Filtro: status=${status} inválido` });
   }
 
   if (!classId) {
-    res.status(400).json({ error: 'Falta classId' });
+    return res.status(400).json({ error: 'Falta classId' });
   }
   classId = Number(classId);
 
