@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { obtenerClase } from '../services/clasesService';
 
+const formatDate = (date) => new Intl.DateTimeFormat('es', {
+	day: '2-digit',
+	month: 'long',
+	year: 'numeric',
+}).format(new Date(date));
+
 const DetalleClase = () => {
 	const { id } = useParams();
 	const [clase, setClase] = useState(null);
@@ -48,6 +54,8 @@ const DetalleClase = () => {
 						<div className="class-detail-field"><span>Ubicación</span><strong>{clase.location}</strong></div>
 						<div className="class-detail-field"><span>Horario</span><strong>{clase.schedule}</strong></div>
 						<div className="class-detail-field"><span>Estaciones asignadas</span><strong>{clase._count.stations}</strong></div>
+						<div className="class-detail-field"><span>Fecha de creación</span><strong>{formatDate(clase.createdAt)}</strong></div>
+						<div className="class-detail-field"><span>Última actualización</span><strong>{formatDate(clase.updatedAt)}</strong></div>
 					</section>
 				</>
 			)}

@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listarClases } from '../services/clasesService';
 
+const formatDate = (date) => new Intl.DateTimeFormat('es', {
+	day: '2-digit',
+	month: 'short',
+	year: 'numeric',
+}).format(new Date(date));
+
 const Clases = () => {
 	const [clases, setClases] = useState([]);
 	const [status, setStatus] = useState('loading');
@@ -54,6 +60,7 @@ const Clases = () => {
 							<div className="class-card-meta">
 								<span>{clase.location}</span>
 								<span>{clase.schedule}</span>
+								<span>Actualizada: {formatDate(clase.updatedAt)}</span>
 							</div>
 							<div className="class-card-footer">
 								<span>{clase._count.stations} estaciones</span>
