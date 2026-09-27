@@ -1,4 +1,5 @@
 const express = require('express');
+const autenticarToken = require('../middleware/token');
 const {
   listarTodasEstaciones,
   listarEstaciones,
@@ -11,6 +12,7 @@ const {
 } = require('../controllers/estaciones');
 
 const router = express.Router();
+router.use('/', autenticarToken);
 
 router.get('/all', listarTodasEstaciones); // Extra
 router.get('/', listarEstaciones);

@@ -18,9 +18,13 @@ const getEstacion = async (id) => {
   });
 };
 const getClase = async (classId) => {
-  return await prisma.class.findUnique({
-    where: { id: classId },
-  });
+  try {
+    return await prisma.class.findUnique({
+      where: { id: classId },
+    });
+  } catch (error) {
+    return null;
+  }
 };
 
 const calculateStatus = (lastReport, ignored) => {

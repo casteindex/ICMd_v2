@@ -1,4 +1,5 @@
 const express = require('express');
+const autenticarToken = require('../middleware/token');
 const {
   obtenerUsuarios,
   crearUsuario,
@@ -6,6 +7,7 @@ const {
 } = require('../controllers/usuarios');
 
 const router = express.Router();
+router.use('/', autenticarToken);
 
 router.get('/', obtenerUsuarios); // Extra
 router.post('/register', crearUsuario);
