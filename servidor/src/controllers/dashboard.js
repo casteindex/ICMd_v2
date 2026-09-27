@@ -26,12 +26,13 @@ const getResumen = async (req, res) => {
         },
       },
     });
+
     const estados = estaciones.map(({ reports, ignored, ...station }) => {
       const lastReport = reports[0] ?? null;
       const { calculatedStatus } = calculateStatus(lastReport, ignored);
       return calculatedStatus;
     });
-    console.log('MAP', estados);
+
     // Encontrar cantidad de cada estado
     const active = estados.filter((estado) => estado !== 'IGNORADA').length;
     const ok = estados.filter((estado) => estado === 'OK').length;

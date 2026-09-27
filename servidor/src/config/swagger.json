@@ -1,0 +1,2631 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API de Monitoreo de Estaciones e Infraestructura (ICMd)",
+    "version": "1.0.0",
+    "description": "Documentación interactiva de la API REST para la gestión y monitoreo en tiempo real de estaciones de trabajo, clases, telemetría y métricas de salud.\n\n### Autenticación\nLa mayoría de las rutas de esta API están protegidas mediante **JWT (JSON Web Token)**. \nPara probar los endpoints protegidos en esta interfaz:\n1. Utiliza el endpoint `POST /api/auth/login` con tus credenciales de administrador.\n2. Copia el token retornado en la respuesta.\n3. Haz clic en el botón **Authorize** (arriba a la derecha) e ingresa el token JWT.\n4. Swagger UI agregará automáticamente el encabezado `Authorization: Bearer <token>` en cada solicitud.",
+    "contact": {
+      "name": "Equipo de Desarrollo ICMd"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Servidor de desarrollo local"
+    },
+    {
+      "url": "/",
+      "description": "Servidor actual (relativo)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Operaciones de autenticación y gestión de usuarios administradores"
+    },
+    {
+      "name": "Classes",
+      "description": "Gestión y administración de clases / laboratorios"
+    },
+    {
+      "name": "Stations",
+      "description": "Gestión de estaciones de trabajo, telemetría y reportes de estado (Heartbeats)"
+    },
+    {
+      "name": "Dashboard",
+      "description": "Métricas consolidadas y resúmenes de estado de infraestructura en tiempo real"
+    },
+    {
+      "name": "Health",
+      "description": "Comprobación del estado y disponibilidad del servicio"
+    }
+  ],
+  "paths": {
+    "/api/auth/": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Listar usuarios registrados",
+        "description": "Obtiene la lista de todos los usuarios registrados en el sistema. Endpoint público / de consulta administrativa.",
+        "operationId": "obtenerUsuarios",
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios obtenida exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al listar usuarios.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible listar los usuarios."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Registrar usuario administrador inicial",
+        "description": "Registra el único usuario administrador del sistema. Si ya existe un administrador registrado, el sistema rechazará la solicitud con un código 403 Forbidden. La contraseña debe tener mínimo 8 caracteres, al menos una letra mayúscula y al menos un número.",
+        "operationId": "crearUsuario",
+        "requestBody": {
+          "description": "Datos del administrador a registrar",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              },
+              "example": {
+                "name": "Administrador Principal",
+                "email": "admin@gmail.com",
+                "password": "Password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario administrador creado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "example": "Administrador Principal"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "admin@gmail.com"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2026-09-27T15:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos de entrada inválidos o faltantes (campos obligatorios, formato de correo o requisitos de contraseña).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "camposObligatorios": {
+                    "summary": "Campos incompletos",
+                    "value": {
+                      "mensaje": "Todos los campos son obligatorios"
+                    }
+                  },
+                  "contrasenaInvalida": {
+                    "summary": "Contraseña no cumple requisitos",
+                    "value": {
+                      "mensaje": "Contraseña inválida"
+                    }
+                  },
+                  "correoInvalido": {
+                    "summary": "Formato de correo inválido",
+                    "value": {
+                      "mensaje": "Correo inválido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Ya existe un administrador en el sistema.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "El sistema ya tiene un administrador registrado"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "El correo electrónico ya se encuentra registrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Correo ya existe"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible registrar el usuario."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Iniciar sesión de usuario",
+        "description": "Autentica las credenciales de un usuario registrado y genera un token JWT con vigencia de 1 hora para acceder a los endpoints protegidos de la API.",
+        "operationId": "iniciarSesion",
+        "requestBody": {
+          "description": "Credenciales de acceso",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "admin@gmail.com",
+                "password": "Password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Inicio de sesión exitoso. Retorna el token JWT y la información del usuario.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campos faltantes en el cuerpo de la solicitud.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Todos los campos son obligatorios"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas (correo o contraseña incorrectos).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Credenciales inválidas"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor al procesar el inicio de sesión.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Error interno del servidor"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classes": {
+      "get": {
+        "tags": ["Classes"],
+        "summary": "Listar todas las clases",
+        "description": "Obtiene la lista completa de clases registradas, incluyendo el conteo de estaciones asociadas a cada una. Permite filtrar opcionalmente por estado activo (`true`/`false`).\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "listarClases",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "active",
+            "in": "query",
+            "description": "Filtrar por estado activo de la clase",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de clases obtenida exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Class"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "_count": {
+                            "type": "object",
+                            "properties": {
+                              "stations": {
+                                "type": "integer",
+                                "example": 15
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "code": "INF-101",
+                    "name": "Programación Web",
+                    "section": "Sección 1",
+                    "location": "Laboratorio 301",
+                    "schedule": "Lunes y Miércoles 08:00 - 10:00",
+                    "active": true,
+                    "createdAt": "2026-09-20T10:00:00.000Z",
+                    "updatedAt": "2026-09-20T10:00:00.000Z",
+                    "_count": {
+                      "stations": 24
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al listar las clases.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible listar las clases."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Classes"],
+        "summary": "Crear una nueva clase",
+        "description": "Registra una nueva clase o laboratorio en la base de datos. El código de la clase debe ser único.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "crearClase",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Datos de la nueva clase a crear",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassCreateRequest"
+              },
+              "example": {
+                "code": "INF-202",
+                "name": "Bases de Datos Avanzadas",
+                "section": "Sección 2",
+                "location": "Laboratorio 305",
+                "schedule": "Martes y Jueves 10:00 - 12:00"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Clase creada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Class"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos incompletos o inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Datos incompletos. Revise que tenga todos lo campos completos"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe una clase con el código especificado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Ya existe una clase con ese código"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al crear la clase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible crear la clase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classes/{id}": {
+      "get": {
+        "tags": ["Classes"],
+        "summary": "Obtener detalle de una clase",
+        "description": "Obtiene la información detallada de una clase por su ID numérico, incluyendo conteo de estaciones y un listado de estaciones asociadas.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "buscarClase",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la clase",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Clase encontrada con éxito.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Class"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "_count": {
+                          "type": "object",
+                          "properties": {
+                            "stations": {
+                              "type": "integer",
+                              "example": 20
+                            }
+                          }
+                        },
+                        "stations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "example": 1
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-09-20T10:00:00.000Z"
+                              },
+                              "updatedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-09-20T10:00:00.000Z"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID de clase inválido (no numérico).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ID inválido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una clase con el ID solicitado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe clase con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al buscar la clase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible buscar la clase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Classes"],
+        "summary": "Actualizar una clase",
+        "description": "Actualiza parcialmente o totalmente los campos de una clase existente.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "actualizarClase",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la clase a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "Campos a modificar de la clase",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassUpdateRequest"
+              },
+              "example": {
+                "code": "INF-101-B",
+                "name": "Programación Web II",
+                "section": "Sección 1",
+                "location": "Laboratorio 302",
+                "schedule": "Lunes y Miércoles 10:00 - 12:00",
+                "active": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Clase actualizada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Class"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una clase con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe clase con ese ID"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "El código nuevo ya está en uso por otra clase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Codigo invalido, pertenece a otra clase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al actualizar la clase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible actualizar la clase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Classes"],
+        "summary": "Eliminar una clase",
+        "description": "Elimina una clase por su ID. Falla con 409 si la clase aún contiene estaciones de trabajo asociadas.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "eliminarClase",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la clase a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Clase eliminada correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string",
+                      "example": "Clase eliminada correctamente"
+                    },
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ID inválido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe clase con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe clase con ese ID"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "La clase tiene estaciones asociadas y no se puede eliminar.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "La clase aun tiene estaciones asociadas, no se puede eliminar"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al eliminar la clase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible eliminar la clase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stations/all": {
+      "get": {
+        "tags": ["Stations"],
+        "summary": "Listar todas las estaciones del sistema",
+        "description": "Obtiene la lista global de todas las estaciones registradas junto con su historial completo de reportes.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "listarTodasEstaciones",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de todas las estaciones obtenida exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/Station"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "reports": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Report"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al listar las estaciones.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible listar las estaciones."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stations": {
+      "get": {
+        "tags": ["Stations"],
+        "summary": "Listar estaciones de una clase con estado calculado",
+        "description": "Obtiene las estaciones asociadas a una clase específica (`classId`), calculando dinámicamente su estado (`calculatedStatus` y `elapsedSeconds`) según la antigüedad de su último reporte. Permite filtrar por estado calculado (`OK`, `ADVERTENCIA`, `CRITICO`, `IGNORADA`, `SIN_REPORTES`) y realizar búsquedas por nombre con el parámetro `q`.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "listarEstaciones",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "query",
+            "description": "ID numérico de la clase obligatoria para filtrar estaciones",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filtrar estaciones por estado calculado (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["SIN_REPORTES", "OK", "ADVERTENCIA", "CRITICO", "IGNORADA"]
+            },
+            "example": "OK"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Texto para filtrar estaciones por coincidencia parcial en el nombre",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "PC-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de estaciones con estado calculado obtenida exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StationListItem"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Falta el parámetro classId o el filtro de status es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "faltaClassId": {
+                    "summary": "Falta classId",
+                    "value": {
+                      "error": "Falta classId"
+                    }
+                  },
+                  "statusInvalido": {
+                    "summary": "Status inválido",
+                    "value": {
+                      "error": "Filtro: status=INVALIDO inválido"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una clase con el ID indicado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una clase con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al listar estaciones.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible listar las estaciones."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Stations"],
+        "summary": "Crear una nueva estación",
+        "description": "Registra una nueva estación de trabajo en una clase activa. El código de la estación debe ser único dentro de la misma clase. El nombre debe contener al menos 3 caracteres.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "crearEstacion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Datos de la estación a registrar",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationCreateRequest"
+              },
+              "example": {
+                "code": "PC-01",
+                "name": "Estación Principal FabLab",
+                "location": "FabLab Mesa 1",
+                "operatingSystem": "WINDOWS",
+                "classId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Estación creada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Station"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos incompletos, SO inválido, clase inactiva o nombre menor a 3 caracteres.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "datosIncompletos": {
+                    "summary": "Datos incompletos",
+                    "value": {
+                      "error": "Datos incompletos"
+                    }
+                  },
+                  "soInvalido": {
+                    "summary": "Sistema operativo inválido",
+                    "value": {
+                      "error": "Sistema operativo inválido"
+                    }
+                  },
+                  "claseInactiva": {
+                    "summary": "Clase inactiva",
+                    "value": {
+                      "error": "Clase inactiva"
+                    }
+                  },
+                  "nombreCorto": {
+                    "summary": "Nombre muy corto",
+                    "value": {
+                      "error": "Nombre debe tener al menos 3 caracteres"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una clase con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una clase con ese ID"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe una estación con ese código en esa clase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Ya existe una estación con ese código en esa clase"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al crear la estación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible crear la estación"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stations/{id}": {
+      "get": {
+        "tags": ["Stations"],
+        "summary": "Obtener detalle completo de una estación",
+        "description": "Obtiene la información de una estación, los datos de su clase asociada, su estado calculado y su historial reciente de reportes (limitado por el query param `limit`, por defecto 20).\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "obtenerEstacion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la estación",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Cantidad máxima de reportes históricos a retornar (entre 1 y 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Detalle de la estación obtenido exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StationDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parámetro limit inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Límite inválido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una estación con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una estación con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al obtener la estación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible obtener la estación"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Stations"],
+        "summary": "Actualizar una estación",
+        "description": "Actualiza la información de una estación de trabajo (nombre, código, ubicación, SO o reasignación a otra clase activa).\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "updateEstacion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la estación a actualizar",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "Campos de la estación a actualizar",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationUpdateRequest"
+              },
+              "example": {
+                "code": "PC-01-MOD",
+                "name": "Estación Modificada",
+                "location": "FabLab Mesa 2",
+                "operatingSystem": "LINUX",
+                "classId": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estación actualizada exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Station"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Clase de destino inactiva.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Clase de destino inactiva"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Estación o clase de destino no encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "estacionNoExiste": {
+                    "summary": "Estación no existe",
+                    "value": {
+                      "error": "No existe una estación con ese ID"
+                    }
+                  },
+                  "claseDestinoNoExiste": {
+                    "summary": "Clase destino no existe",
+                    "value": {
+                      "error": "Clase de destino no existe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe una estación con ese código.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Ya existe una estación con ese código"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al actualizar la estación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible actualizar la estación"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Stations"],
+        "summary": "Eliminar una estación",
+        "description": "Elimina una estación de trabajo y todos sus reportes asociados en cascada.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "eliminarEstacion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la estación a eliminar",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Estación eliminada correctamente (sin contenido)."
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una estación con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una estación con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al eliminar la estación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible eliminar la estación"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stations/{id}/ignore": {
+      "patch": {
+        "tags": ["Stations"],
+        "summary": "Modificar estado de ignorado de una estación",
+        "description": "Actualiza la bandera booleana `ignored` de una estación. Cuando está en `true`, la estación no dispara alertas críticas en el sistema.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "patchEstacion",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la estación",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "Estado de ignorado a establecer",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StationPatchRequest"
+              },
+              "example": {
+                "ignored": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado de ignorado modificado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "example": 1
+                    },
+                    "ignored": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2026-09-27T15:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El valor del campo ignored no es un booleano válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No es booleano"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una estación con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una estación con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al actualizar la estación.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible actualizar la estación"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stations/{id}/reports": {
+      "post": {
+        "tags": ["Stations"],
+        "summary": "Registrar reporte periódico / Heartbeat de una estación",
+        "description": "Registra una nueva lectura de telemetría (CPU, Memoria, IP y Estado declarado) enviada por el agente instalado en la estación. Retorna el reporte guardado junto con el estado calculado actualizado y los segundos transcurridos.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "registrarHeartbeat",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID numérico de la estación emisora del reporte",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "description": "Datos de telemetría y estado reportados por el agente",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatRequest"
+              },
+              "example": {
+                "declaredStatus": "OK",
+                "agentVersion": "1.0.0",
+                "ipAddress": "192.168.1.105",
+                "cpuPercent": 42,
+                "memoryPercent": 65
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reporte registrado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos incompletos, estado desconocido o valores de porcentaje fuera de rango (0-100).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "datosIncompletos": {
+                    "summary": "Datos incompletos",
+                    "value": {
+                      "error": "Datos incompletos"
+                    }
+                  },
+                  "estadoDesconocido": {
+                    "summary": "Estado desconocido",
+                    "value": {
+                      "error": "Estado desconocido"
+                    }
+                  },
+                  "porcentajeInvalido": {
+                    "summary": "Porcentaje inválido",
+                    "value": {
+                      "error": "Porcentaje inválido"
+                    }
+                  },
+                  "porcentajeFueraRango": {
+                    "summary": "Porcentaje fuera de rango",
+                    "value": {
+                      "error": "Procentaje fuera de rango"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una estación con ese ID.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una estación con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al crear el reporte.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible crear reporte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/summary": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Obtener resumen y métricas consolidadas del dashboard",
+        "description": "Calcula y retorna los contadores en tiempo real del estado de las estaciones pertenecientes a una clase: total de activas, estaciones en OK, advertencia, crítico e ignoradas.\n\n**Autenticación:** Requiere Bearer Token JWT.",
+        "operationId": "getResumen",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "query",
+            "description": "ID numérico de la clase para consolidar el resumen",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumen métrico generado exitosamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Falta el parámetro requerido classId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Falta classId"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token no proporcionado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token no proporcionado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Token inválido o expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "mensaje": "Token inválido o expirado."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe una clase con el ID especificado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No existe una clase con ese ID"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al generar el resumen del dashboard.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "No fue posible mostrar el resumen."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Verificar salud del servidor (Healthcheck)",
+        "description": "Endpoint público para verificar que la aplicación Express se encuentra en ejecución y operativa.",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Servidor funcionando correctamente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno al verificar la salud del servicio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "error": {
+                      "type": "string",
+                      "example": "Error interno del servidor"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Introduce el token JWT obtenido tras autenticarte en `POST /api/auth/login`. No incluyas la palabra 'Bearer ', Swagger UI lo enviará automáticamente."
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "description": "Entidad de usuario del sistema",
+        "required": ["id", "name", "email", "passwordHash"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identificador único incremental del usuario",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre completo del usuario",
+            "example": "Alejandro Admin"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Dirección de correo electrónico única",
+            "example": "admin@gmail.com"
+          },
+          "passwordHash": {
+            "type": "string",
+            "description": "Hash bcrypt de la contraseña",
+            "example": "$2b$10$EPwX1p2K9YgQ9e7wL0hN5.k.Jd5P4r6b/c8a2b1c3d4e5f6g7h8i"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha y hora de registro del usuario",
+            "example": "2026-09-27T14:30:00.000Z"
+          }
+        }
+      },
+      "Class": {
+        "type": "object",
+        "description": "Entidad de clase o laboratorio de cómputo",
+        "required": ["id", "code", "name", "section", "location", "schedule"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identificador único incremental de la clase",
+            "example": 1
+          },
+          "code": {
+            "type": "string",
+            "description": "Código único identificador de la clase",
+            "example": "INF-101"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre de la materia o laboratorio",
+            "example": "Desarrollo Web"
+          },
+          "section": {
+            "type": "string",
+            "description": "Sección de la clase",
+            "example": "Sección 1"
+          },
+          "location": {
+            "type": "string",
+            "description": "Ubicación física o aula asignada",
+            "example": "Laboratorio 301"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Horario establecido para la clase",
+            "example": "Lunes a Jueves 07:00 - 08:30"
+          },
+          "active": {
+            "type": "boolean",
+            "nullable": true,
+            "default": true,
+            "description": "Estado activo o inactivo de la clase",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha de creación del registro",
+            "example": "2026-09-27T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha de última modificación",
+            "example": "2026-09-27T12:00:00.000Z"
+          }
+        }
+      },
+      "Station": {
+        "type": "object",
+        "description": "Entidad de estación de trabajo / computadora",
+        "required": ["id", "code", "name", "location", "operatingSystem", "classId"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identificador único incremental de la estación",
+            "example": 1
+          },
+          "code": {
+            "type": "string",
+            "description": "Código identificador de la estación (único por clase)",
+            "example": "PC-01"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre descriptivo de la estación",
+            "example": "Estación Frontal 01"
+          },
+          "location": {
+            "type": "string",
+            "description": "Ubicación física dentro del laboratorio",
+            "example": "Fila 1 - Puesto A"
+          },
+          "operatingSystem": {
+            "type": "string",
+            "description": "Sistema operativo instalado en la estación",
+            "enum": ["WINDOWS", "MACOS", "LINUX", "CHROMEOS"],
+            "example": "WINDOWS"
+          },
+          "ignored": {
+            "type": "boolean",
+            "nullable": true,
+            "default": false,
+            "description": "Indica si la estación está excluida de alertas críticas",
+            "example": false
+          },
+          "classId": {
+            "type": "integer",
+            "description": "ID de la clase a la cual pertenece la estación",
+            "example": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha de registro de la estación",
+            "example": "2026-09-27T10:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Fecha de última modificación",
+            "example": "2026-09-27T11:00:00.000Z"
+          }
+        }
+      },
+      "Report": {
+        "type": "object",
+        "description": "Entidad de reporte periódico / telemetría recibida de una estación",
+        "required": ["id", "declaredStatus", "agentVersion", "ipAddress", "cpuPercent", "memoryPercent", "stationId"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Identificador único incremental del reporte",
+            "example": 100
+          },
+          "declaredStatus": {
+            "type": "string",
+            "description": "Estado autodeclarado por el agente cliente",
+            "enum": ["OK", "INTERNET", "IA"],
+            "example": "OK"
+          },
+          "agentVersion": {
+            "type": "string",
+            "description": "Versión del software agente ejecutándose en el cliente",
+            "example": "1.0.0"
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "Dirección IP de la estación",
+            "example": "192.168.1.105"
+          },
+          "cpuPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Porcentaje de uso de CPU reportado (0 - 100)",
+            "example": 35
+          },
+          "memoryPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Porcentaje de uso de memoria RAM reportado (0 - 100)",
+            "example": 60
+          },
+          "stationId": {
+            "type": "integer",
+            "description": "ID de la estación emisora del reporte",
+            "example": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Timestamp de recepción del reporte",
+            "example": "2026-09-27T15:05:00.000Z"
+          }
+        }
+      },
+      "DashboardSummary": {
+        "type": "object",
+        "description": "Resumen métrico de estado y conteo de estaciones de una clase",
+        "required": ["classId", "active", "ok", "warning", "critical", "ignored"],
+        "properties": {
+          "classId": {
+            "type": "integer",
+            "description": "ID de la clase consultada",
+            "example": 1
+          },
+          "active": {
+            "type": "integer",
+            "description": "Total de estaciones activas (no ignoradas)",
+            "example": 18
+          },
+          "ok": {
+            "type": "integer",
+            "description": "Estaciones en estado OK (reporte reciente <= 25s)",
+            "example": 15
+          },
+          "warning": {
+            "type": "integer",
+            "description": "Estaciones en estado ADVERTENCIA (reporte entre 25s y 40s)",
+            "example": 2
+          },
+          "critical": {
+            "type": "integer",
+            "description": "Estaciones en estado CRITICO (> 40s o falla declarada INTERNET/IA)",
+            "example": 1
+          },
+          "ignored": {
+            "type": "integer",
+            "description": "Estaciones con bandera de ignoradas",
+            "example": 2
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Estructura estándar de respuesta para errores de la API",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Descripción detallada del error",
+            "example": "Mensaje descriptivo del error"
+          },
+          "mensaje": {
+            "type": "string",
+            "description": "Mensaje informativo del error o advertencia",
+            "example": "Credenciales inválidas"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "description": "Cuerpo de solicitud para registro de administrador inicial",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre completo del administrador",
+            "example": "Administrador Principal"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Correo electrónico válido",
+            "example": "admin@gmail.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña segura (mínimo 8 caracteres, al menos 1 letra mayúscula y 1 número)",
+            "example": "Password123"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "description": "Cuerpo de solicitud para inicio de sesión",
+        "required": ["email", "password"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Correo del usuario",
+            "example": "admin@gmail.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña del usuario",
+            "example": "Password123"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "description": "Respuesta con token JWT e información del usuario autenticado",
+        "required": ["token", "expiresIn", "user"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Token JWT de autenticación Bearer",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA0ODk0NjQsImV4cCI6MTc5MDQ5MzA2NH0.tuodhgjOm-_H97LfN2KIWJ2ct4-ukPGSkPQopDk4e9U"
+          },
+          "expiresIn": {
+            "type": "integer",
+            "description": "Tiempo de expiración del token en segundos (3600 = 1 hora)",
+            "example": 3600
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 1
+              },
+              "name": {
+                "type": "string",
+                "example": "Administrador"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "admin@gmail.com"
+              }
+            }
+          }
+        }
+      },
+      "ClassCreateRequest": {
+        "type": "object",
+        "description": "Cuerpo de solicitud para registrar una nueva clase",
+        "required": ["code", "name", "section", "location", "schedule"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Código único de la clase",
+            "example": "INF-202"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre descriptivo de la materia",
+            "example": "Desarrollo Web II"
+          },
+          "section": {
+            "type": "string",
+            "description": "Sección del curso",
+            "example": "Sección 1"
+          },
+          "location": {
+            "type": "string",
+            "description": "Ubicación o laboratorio",
+            "example": "Laboratorio 305"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Horario de impartición",
+            "example": "Martes y Jueves 10:00 - 12:00"
+          }
+        }
+      },
+      "ClassUpdateRequest": {
+        "type": "object",
+        "description": "Cuerpo de solicitud para actualizar una clase",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Código de la clase",
+            "example": "INF-202-B"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre de la materia",
+            "example": "Desarrollo Web Avanzado"
+          },
+          "section": {
+            "type": "string",
+            "description": "Sección",
+            "example": "Sección 2"
+          },
+          "location": {
+            "type": "string",
+            "description": "Ubicación o laboratorio",
+            "example": "Laboratorio 301"
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Horario",
+            "example": "Lunes a Jueves 08:00 - 09:30"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "Estado de la clase",
+            "example": true
+          }
+        }
+      },
+      "StationCreateRequest": {
+        "type": "object",
+        "description": "Cuerpo de solicitud para crear una nueva estación de trabajo",
+        "required": ["code", "name", "location", "operatingSystem", "classId"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Código único de la estación dentro de la clase",
+            "example": "PC-01"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "description": "Nombre descriptivo de la estación (mínimo 3 caracteres)",
+            "example": "Estación de Trabajo 01"
+          },
+          "location": {
+            "type": "string",
+            "description": "Ubicación física en el laboratorio",
+            "example": "Laboratorio 301 - Puesto 1"
+          },
+          "operatingSystem": {
+            "type": "string",
+            "enum": ["WINDOWS", "MACOS", "LINUX", "CHROMEOS"],
+            "description": "Sistema operativo instalado",
+            "example": "WINDOWS"
+          },
+          "classId": {
+            "type": "integer",
+            "description": "ID de la clase activa a asociar",
+            "example": 1
+          }
+        }
+      },
+      "StationUpdateRequest": {
+        "type": "object",
+        "description": "Cuerpo de solicitud para actualizar una estación",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Nuevo código de la estación",
+            "example": "PC-01-REV"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nuevo nombre descriptivo",
+            "example": "Estación 01 - Actualizada"
+          },
+          "location": {
+            "type": "string",
+            "description": "Nueva ubicación",
+            "example": "Laboratorio 302 - Puesto 5"
+          },
+          "operatingSystem": {
+            "type": "string",
+            "enum": ["WINDOWS", "MACOS", "LINUX", "CHROMEOS"],
+            "description": "Sistema operativo",
+            "example": "LINUX"
+          },
+          "classId": {
+            "type": "integer",
+            "description": "ID de la clase activa destino",
+            "example": 1
+          }
+        }
+      },
+      "StationPatchRequest": {
+        "type": "object",
+        "description": "Cuerpo para actualizar bandera ignored",
+        "required": ["ignored"],
+        "properties": {
+          "ignored": {
+            "type": "boolean",
+            "description": "Indica si la estación será ignorada en las alertas",
+            "example": true
+          }
+        }
+      },
+      "StationListItem": {
+        "type": "object",
+        "description": "Elemento de lista de estaciones con estado dinámicamente calculado",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Station"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lastReport": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Report"
+                  }
+                ],
+                "nullable": true,
+                "description": "Último reporte registrado para esta estación"
+              },
+              "elapsedSeconds": {
+                "type": "number",
+                "nullable": true,
+                "description": "Segundos transcurridos desde el último reporte",
+                "example": 14.5
+              },
+              "calculatedStatus": {
+                "type": "string",
+                "enum": ["SIN_REPORTES", "OK", "ADVERTENCIA", "CRITICO", "IGNORADA"],
+                "description": "Estado operativo calculado en tiempo real",
+                "example": "OK"
+              }
+            }
+          }
+        ]
+      },
+      "StationDetailResponse": {
+        "type": "object",
+        "description": "Respuesta detallada con información de estación, clase, estado y últimos reportes",
+        "properties": {
+          "station": {
+            "$ref": "#/components/schemas/Station"
+          },
+          "class": {
+            "$ref": "#/components/schemas/Class"
+          },
+          "lastReport": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Report"
+              }
+            ],
+            "nullable": true
+          },
+          "elapsedSeconds": {
+            "type": "number",
+            "nullable": true,
+            "example": 12.3
+          },
+          "calculatedStatus": {
+            "type": "string",
+            "enum": ["SIN_REPORTES", "OK", "ADVERTENCIA", "CRITICO", "IGNORADA"],
+            "example": "OK"
+          },
+          "reports": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Report"
+            }
+          }
+        }
+      },
+      "HeartbeatRequest": {
+        "type": "object",
+        "description": "Payload de telemetría emitido por el agente cliente",
+        "required": ["declaredStatus", "agentVersion", "ipAddress", "cpuPercent", "memoryPercent"],
+        "properties": {
+          "declaredStatus": {
+            "type": "string",
+            "enum": ["OK", "INTERNET", "IA"],
+            "description": "Estado autodeclarado del cliente",
+            "example": "OK"
+          },
+          "agentVersion": {
+            "type": "string",
+            "description": "Versión del software agente",
+            "example": "1.0.0"
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "Dirección IP origen",
+            "example": "192.168.1.105"
+          },
+          "cpuPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Porcentaje de uso de CPU",
+            "example": 45
+          },
+          "memoryPercent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Porcentaje de uso de memoria",
+            "example": 70
+          }
+        }
+      },
+      "HeartbeatResponse": {
+        "type": "object",
+        "description": "Respuesta tras procesar el reporte periódico",
+        "properties": {
+          "lastReport": {
+            "$ref": "#/components/schemas/Report"
+          },
+          "elapsedSeconds": {
+            "type": "number",
+            "example": 0.1
+          },
+          "calculatedStatus": {
+            "type": "string",
+            "enum": ["SIN_REPORTES", "OK", "ADVERTENCIA", "CRITICO", "IGNORADA"],
+            "example": "OK"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "description": "Respuesta de comprobación de salud del servidor",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-09-27T15:08:00.000Z"
+          }
+        }
+      }
+    }
+  }
+}

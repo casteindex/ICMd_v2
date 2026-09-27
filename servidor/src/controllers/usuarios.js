@@ -67,12 +67,6 @@ const crearUsuario = async (req, res) => {
 
   try {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-
-    console.log('password:', password);
-    console.log('rounds:', SALT_ROUNDS);
-    console.log('secret:', JWT_SECRET);
-    console.log('passwordHash:', passwordHash);
-
     const usuario = await prisma.user.create({
       data: {
         name: name,
