@@ -169,6 +169,13 @@ const crearEstacion = async (req, res) => {
         error: 'Clase inactiva',
       });
     }
+    // Validar que el nombre tenga al menos 3 caracteres
+    if (typeof name === 'string' && name.length < 3) {
+      return res.status(400).json({
+        error: 'Nombre debe tener al menos 3 caracteres',
+      });
+    }
+
     /*
     Nota: La validación "el código ya existe dentro de esa clase" es innecesaria
     aquí, porque el campo `code` en el schema.prisma ya es unique. Así que devuelve
