@@ -1,5 +1,6 @@
 ### Listar todas las estaciones
-GET http://localhost:3000/api/allstations
+GET http://localhost:3000/api/stations/all
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA1NjA3MTgsImV4cCI6MTc5MDU2NDMxOH0.wme3rcqAQ0z7C-42TweO6t96_fgB0ulu9zP0nn6NJ8c
 
 ###
 
@@ -33,7 +34,7 @@ Content-Type: application/json
 
 ### Obtener una estación
 GET http://localhost:3000/api/stations/3?limit=1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA0ODk0NjQsImV4cCI6MTc5MDQ5MzA2NH0.tuodhgjOm-_H97LfN2KIWJ2ct4-ukPGSkPQopDk4e9U
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA1NjA3MTgsImV4cCI6MTc5MDU2NDMxOH0.wme3rcqAQ0z7C-42TweO6t96_fgB0ulu9zP0nn6NJ8c
 
 ###
 
@@ -80,3 +81,9 @@ Content-Type: application/json
 
 ### Detalle de estación
 GET http://localhost:3000/api/stations/4
+
+###
+
+### Eliminar estación
+DELETE http://localhost:3000/api/stations/13
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA1NjA3MTgsImV4cCI6MTc5MDU2NDMxOH0.wme3rcqAQ0z7C-42TweO6t96_fgB0ulu9zP0nn6NJ8c

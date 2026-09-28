@@ -27,6 +27,8 @@ dist-ssr
 *.sqlite
 *.sqlite3
 *.db
+test.db*
+e2e.db*
 
 # Secretos
 .env

@@ -1,6 +1,6 @@
 ### Listar todas las clases
 GET http://localhost:3000/api/classes
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA0ODk0NjQsImV4cCI6MTc5MDQ5MzA2NH0.tuodhgjOm-_H97LfN2KIWJ2ct4-ukPGSkPQopDk4e9U
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA1NjA3MTgsImV4cCI6MTc5MDU2NDMxOH0.wme3rcqAQ0z7C-42TweO6t96_fgB0ulu9zP0nn6NJ8c
 
 ### Listar todas las clases true
 GET http://localhost:3000/api/classes?active=true
@@ -41,7 +41,8 @@ Content-Type: application/json
 GET http://localhost:3000/api/classes/1
 
 ### Update una estación
-PUT http://localhost:3000/api/classes/3
+PUT http://localhost:3000/api/classes/4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3OTA1NTU2NjAsImV4cCI6MTc5MDU1OTI2MH0.HrxoqGRiD63nIlcN8PdUCG2s_-MgbhB2EsvXCDFGXs4
 Content-Type: application/json
 
 {

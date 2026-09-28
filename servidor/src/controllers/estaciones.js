@@ -395,7 +395,7 @@ const eliminarEstacion = async (req, res) => {
     await prisma.station.delete({
       where: { id: Number(id) },
     });
-    res.status(204); // No manda respuesta
+    res.status(204).send(); // No manda respuesta
   } catch (error) {
     console.error('Error al eliminar la estación:', error.code, error.message);
 

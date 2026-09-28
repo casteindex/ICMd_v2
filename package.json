@@ -1,0 +1,18 @@
+{
+  "name": "icmd-v2",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npm --prefix servidor test",
+    "test:unit": "npm --prefix servidor run test:unit",
+    "test:integration": "npm --prefix servidor run test:integration",
+    "test:coverage": "npm --prefix servidor run test:coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "seed": "npm --prefix servidor run seed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "cross-env": "^7.0.3"
+  }
+}
