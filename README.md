@@ -10,49 +10,19 @@ Desarrollado por **Alejandro Castellanos**, **Yuilianna Pérez** y **Joana Hern�
 
 ### Vista de Escritorio — Dashboard de Monitoreo
 
-```
-+------------------------------------------------------------------------------------+
-|  [ICMd Logo]  Monitor   Clases   Estaciones   Simulador             [ Admin / Salir ] |
-+------------------------------------------------------------------------------------+
-|  Clase: [ WEB-01 · Desarrollo Web I v ]    Sección 101 · Lab 3/101   ● Conectado   |
-|                                                                                    |
-|  +--------------+  +--------------+  +--------------+  +------------------------+  |
-|  | Activas: 3   |  | Ok: 1        |  | Advert.: 1   |  | Crítico: 1             |  |
-|  +--------------+  +--------------+  +--------------+  +------------------------+  |
-|                                                                                    |
-|  [ Buscar estación... ]                   [ Filtrar por estado: Todos v ]          |
-|  +---------+---------------+-----------------+---------+------+------+-----------+ |
-|  | Código  | Nombre        | Ubicación       | SO      | CPU  | Mem  | Estado    | |
-|  +---------+---------------+-----------------+---------+------+------+-----------+ |
-|  | PC-01   | Estacion 01   | Fila 1 - P. 1   | Windows | 25%  | 55%  | [ OK ]   | |
-|  | PC-02   | Estacion 02   | Fila 1 - P. 2   | Linux   | 45%  | 68%  | [ADVERT] | |
-|  | PC-03   | Estacion 03   | Fila 1 - P. 3   | macOS   | —    | —    | [CRITIC] | |
-|  +---------+---------------+-----------------+---------+------+------+-----------+ |
-+------------------------------------------------------------------------------------+
-```
+![Tema Claro](./screenshots/dashboardClaro.jpeg)
 
-> _Reemplazar con captura real en `docs/screenshots/desktop-dashboard.png`_
+---
+
+![Tema Oscuro](./screenshots/dashboardOscuro.jpeg)
 
 ### Vista Móvil
 
-```
-+---------------------------+
-| [≡] ICMd Monitor    [👤]  |
-+---------------------------+
-| Clase: WEB-01             |
-| Sec. 101 · Lab 3/101      |
-+---------------------------+
-| Activas: 3   | Ok: 1      |
-| Adv: 1       | Crit: 1    |
-+---------------------------+
-| Estaciones:               |
-| • PC-01  25% / 55%  [OK]  |
-| • PC-02  45% / 68%  [ADV] |
-| • PC-03  —   / —    [CRI] |
-+---------------------------+
-```
+![Tema Claro](./screenshots/movilClases.png)
 
-> _Reemplazar con captura real en `docs/screenshots/mobile-view.png`_
+---
+
+![Tema Oscuro](./screenshots/movilDashboard.jpeg)
 
 ---
 
@@ -92,10 +62,11 @@ ICMd_v2/
 │   │   ├── integration/     # Pruebas de integración contra test.db
 │   │   ├── helpers.js       # App aislada para Supertest y utilidades
 │   │   └── setup.js         # Carga de variables desde .env.test
-│   ├── .env.example         # ← Plantilla de variables (sin secretos)
 │   └── vitest.config.js
 ├── e2e/                     # Pruebas End-to-End con Playwright
 ├── playwright.config.js     # Configuración E2E (levanta ambos servidores)
+├──.env.servidor.example
+├──.env.cliente.example
 └── README.md
 ```
 
